@@ -20,6 +20,25 @@ html, body {
   line-height: 1.5;
 }
 a { color: var(--a); }
+.banner {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  background: var(--a);
+  color: #111;
+}
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--a);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 nav {
   display: flex;
   justify-content: space-between;

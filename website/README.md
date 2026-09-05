@@ -1,14 +1,10 @@
-# Website
+# RankTier website
 
-Static site for Tier List.
+Static site for [https://ranktier.netlify.app](https://ranktier.netlify.app).
 
-- `index.html` — product page
+- `index.html` — homepage
 - `app/` — playable board
-- `downloads/` — Windows exe, Linux packages, Swift zip
+- `downloads/` — Windows exe, Linux packages, Apple zip
 - `docs/` — HTML install guides
 
-```bash
-python3 -m http.server 8765
-```
-
-Open http://127.0.0.1:8765/
+Netlify publishes this `website/` folder. No build step is required.
