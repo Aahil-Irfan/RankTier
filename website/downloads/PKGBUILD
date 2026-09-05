@@ -1,0 +1,19 @@
+# Maintainer: Aahil <aahil@localhost>
+pkgname=tierlist
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="S–F tier list app for ranking images"
+arch=('x86_64' 'aarch64')
+url="https://localhost"
+license=('MIT')
+depends=()
+source_x86_64=("tierlist-${pkgver}-linux-amd64.tar.gz")
+source_aarch64=("tierlist-${pkgver}-linux-arm64.tar.gz")
+sha256sums_x86_64=('SKIP')
+sha256sums_aarch64=('SKIP')
+
+package() {
+  install -Dm755 "$srcdir/tierlist" "$pkgdir/usr/bin/tierlist"
+  install -Dm644 "$srcdir/tierlist.desktop" "$pkgdir/usr/share/applications/tierlist.desktop"
+  install -Dm644 "$srcdir/README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
+}

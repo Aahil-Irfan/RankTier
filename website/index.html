@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tier List — Rank anything</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%23ff4f4f' width='64' height='64' rx='10'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='36' font-family='system-ui' font-weight='800'%3ES%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <nav>
+    <a class="logo" href="index.html">TIER LIST</a>
+    <div class="links">
+      <a class="active" href="index.html">Home</a>
+      <a href="app/index.html">Open app</a>
+      <a href="downloads/index.html">Downloads</a>
+      <a href="docs/index.html">Docs</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div>
+      <h1>Rank images on a classic S–F board.</h1>
+      <p class="lead">Upload photos, drag them into a tier, and lock them in. Same layout as a tiermaker-style list — in the browser, on Windows, on Linux, and as one Swift app for Apple devices.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="app/index.html">Use it in the browser</a>
+        <a class="btn btn-ghost" href="downloads/index.html">Download for your OS</a>
+      </div>
+    </div>
+    <div class="preview" aria-hidden="true">
+      <div class="prow s"><div class="plabel">S</div><div class="pdrop"></div></div>
+      <div class="prow a"><div class="plabel">A</div><div class="pdrop"></div></div>
+      <div class="prow b"><div class="plabel">B</div><div class="pdrop"></div></div>
+      <div class="prow c"><div class="plabel">C</div><div class="pdrop"></div></div>
+      <div class="prow d"><div class="plabel">D</div><div class="pdrop"></div></div>
+      <div class="prow f"><div class="plabel">F</div><div class="pdrop"></div></div>
+    </div>
+  </section>
+
+  <section class="section" id="platforms">
+    <h2>Every platform has a download</h2>
+    <p class="lead">Pick the build for your computer. The Swift version stays available as an Xcode project zip.</p>
+    <div class="grid">
+      <article class="card">
+        <h3>Windows</h3>
+        <p>Double-click the <code>.exe</code>. It opens the tier list in your browser and stays running until you close the window.</p>
+        <a class="btn btn-primary" href="downloads/TierList-1.0.0-windows-amd64.exe">Download .exe</a>
+      </article>
+      <article class="card">
+        <h3>Linux</h3>
+        <p>Builds for Debian/Ubuntu, Fedora/RHEL, Arch, and a generic installer that works on most distros.</p>
+        <a class="btn btn-primary" href="downloads/index.html#linux">Linux downloads</a>
+      </article>
+      <article class="card">
+        <h3>For Apple</h3>
+        <p>The same SwiftUI app for iPhone, iPad, and Mac. Open the zip in Xcode and run it on a simulator, a device, or your Mac.</p>
+        <a class="btn btn-primary" href="downloads/TierList-For-Apple-1.0.0.zip">Download for Apple</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>How ranking works</h2>
+    <div class="grid">
+      <article class="card">
+        <h3>1. Add images</h3>
+        <p>Choose photos from your computer. They land in the tray under the board.</p>
+      </article>
+      <article class="card">
+        <h3>2. Drag to lock</h3>
+        <p>Drop an image on S through F. It stays in that row until you move it again.</p>
+      </article>
+      <article class="card">
+        <h3>3. Re-rank anytime</h3>
+        <p>Drag between tiers, double-click to return to the tray, or reset the whole board.</p>
+      </article>
+    </div>
+  </section>
+
+  <footer>
+    Tier List 1.0.0 · MIT License · <a href="docs/index.html">Install guides</a>
+  </footer>
+</body>
+</html>

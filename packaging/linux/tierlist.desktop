@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Tier List
+Comment=Rank images on an S–F tier list
+Exec=tierlist
+Icon=tierlist
+Terminal=false
+Categories=Graphics;Utility;
+StartupNotify=false

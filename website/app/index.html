@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Tier List</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%23ff4f4f' width='64' height='64' rx='10'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='36' font-family='system-ui' font-weight='800'%3ES%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #000;
+      --row: #29292b;
+      --line: #000;
+      --s: #ff4f4f;
+      --a: #ff8c2e;
+      --b: #ffcc33;
+      --c: #8cd652;
+      --d: #61baf2;
+      --f: #ba9eed;
+      --label: 88px;
+      --tile: 88px;
+      --tray-tile: 80px;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      padding-top: max(14px, env(safe-area-inset-top));
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand a {
+      color: rgba(255,255,255,0.65);
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .brand a:hover { color: #fff; }
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button, label.btn {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      min-height: 44px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      background: #2c2c2e;
+      color: #fff;
+    }
+    label.btn { display: inline-flex; align-items: center; }
+    button.primary, label.btn.primary { background: #ff8c2e; color: #111; }
+    button.danger { background: #3a1d1d; color: #ffb4b4; }
+    #file { display: none; }
+    main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+    .board {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--line);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .row {
+      display: flex;
+      min-height: var(--tile);
+      background: var(--row);
+    }
+    .row.over { outline: 3px solid #fff; outline-offset: -3px; }
+    .label {
+      flex: 0 0 var(--label);
+      display: grid;
+      place-items: center;
+      font-size: 42px;
+      font-weight: 800;
+      color: #111;
+      letter-spacing: -0.03em;
+    }
+    .s .label { background: var(--s); }
+    .a .label { background: var(--a); }
+    .b .label { background: var(--b); }
+    .c .label { background: var(--c); }
+    .d .label { background: var(--d); }
+    .f .label { background: var(--f); }
+    .drop {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      min-height: var(--tile);
+    }
+    .tile {
+      width: var(--tile);
+      height: var(--tile);
+      object-fit: cover;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+    .tile.selected { outline: 3px solid #fff; outline-offset: -3px; }
+    .tile:active { cursor: grabbing; }
+    .hint {
+      margin: 16px 0 8px;
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
+    }
+    .tray {
+      min-height: 104px;
+      padding: 8px;
+      background: var(--row);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tray.over { border-color: #fff; }
+    .tray .tile {
+      width: var(--tray-tile);
+      height: var(--tray-tile);
+      border-radius: 6px;
+    }
+    .empty {
+      color: rgba(255,255,255,0.45);
+      font-size: 14px;
+      padding: 28px 8px;
+    }
+    @media (max-width: 700px) {
+      :root { --label: 48px; --tile: 64px; --tray-tile: 64px; }
+      header { flex-direction: column; align-items: stretch; }
+      .actions { width: 100%; }
+      .actions .btn, .actions button { flex: 1; justify-content: center; }
+      .label { font-size: 26px; }
+      main { padding: 12px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>Tier List</h1>
+      <a href="../index.html" id="home-link">Home</a>
+    </div>
+    <div class="actions">
+      <label class="btn primary" for="file">Add Images</label>
+      <input id="file" type="file" accept="image/*" multiple />
+      <button type="button" id="reset">Reset ranks</button>
+      <button type="button" class="danger" id="clear">Clear all</button>
+    </div>
+  </header>
+  <main>
+    <div class="board" id="board"></div>
+    <p class="hint" id="hint">Add images, then drag them into a tier to lock them in.</p>
+    <div class="tray" id="tray" data-zone="tray"></div>
+  </main>
+  <script>
+    const TIERS = [
+      { id: "s", label: "S" },
+      { id: "a", label: "A" },
+      { id: "b", label: "B" },
+      { id: "c", label: "C" },
+      { id: "d", label: "D" },
+      { id: "f", label: "F" },
+    ];
+
+    const items = new Map();
+    const order = { tray: [] };
+    let selected = null;
+    TIERS.forEach((t) => { order[t.id] = []; });
+
+    const board = document.getElementById("board");
+    const hint = document.getElementById("hint");
+    const file = document.getElementById("file");
+
+    if (location.protocol === "file:" || !document.referrer && location.pathname.endsWith("/index.html") === false) {
+      const link = document.getElementById("home-link");
+      if (link && (location.protocol === "file:" || !location.pathname.includes("/app"))) {
+        link.hidden = location.protocol !== "http:" && location.protocol !== "https:";
+      }
+    }
+
+    TIERS.forEach((t) => {
+      const row = document.createElement("div");
+      row.className = `row ${t.id}`;
+      row.innerHTML = `<div class="label">${t.label}</div><div class="drop" data-zone="${t.id}"></div>`;
+      board.appendChild(row);
+    });
+
+    function uid() {
+      return crypto.randomUUID();
+    }
+
+    function findZone(id) {
+      for (const [zone, ids] of Object.entries(order)) {
+        if (ids.includes(id)) return zone;
+      }
+      return null;
+    }
+
+    function move(id, dest, index) {
+      const from = findZone(id);
+      if (!from) return;
+      order[from] = order[from].filter((x) => x !== id);
+      const list = order[dest];
+      const at = Math.min(Math.max(index ?? list.length, 0), list.length);
+      list.splice(at, 0, id);
+      render();
+    }
+
+    function tileFor(id) {
+      const img = document.createElement("img");
+      img.className = "tile";
+      img.draggable = true;
+      img.src = items.get(id);
+      img.alt = "Ranked item";
+      img.dataset.id = id;
+      img.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", id);
+        e.dataTransfer.effectAllowed = "move";
+      });
+      img.addEventListener("dblclick", () => {
+        selected = null;
+        move(id, "tray");
+      });
+      img.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selected = selected === id ? null : id;
+        render();
+      });
+      if (selected === id) img.classList.add("selected");
+      return img;
+    }
+
+    function bindZone(el) {
+      el.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        el.classList.add("over");
+        el.closest(".row")?.classList.add("over");
+      });
+      el.addEventListener("dragleave", () => {
+        el.classList.remove("over");
+        el.closest(".row")?.classList.remove("over");
+      });
+      el.addEventListener("drop", (e) => {
+        e.preventDefault();
+        el.classList.remove("over");
+        el.closest(".row")?.classList.remove("over");
+        const id = e.dataTransfer.getData("text/plain");
+        if (!id || !items.has(id)) return;
+        const kids = [...el.querySelectorAll(".tile")];
+        let index = kids.length;
+        for (let i = 0; i < kids.length; i++) {
+          const r = kids[i].getBoundingClientRect();
+          if (e.clientX < r.left + r.width / 2) {
+            index = i;
+            break;
+          }
+        }
+        move(id, el.dataset.zone, index);
+      });
+      el.addEventListener("click", () => {
+        if (!selected || !items.has(selected)) return;
+        const id = selected;
+        selected = null;
+        move(id, el.dataset.zone);
+      });
+    }
+
+    function render() {
+      document.querySelectorAll("[data-zone]").forEach((zoneEl) => {
+        const zone = zoneEl.dataset.zone;
+        zoneEl.replaceChildren();
+        order[zone].forEach((id) => zoneEl.appendChild(tileFor(id)));
+        if (zone === "tray" && order.tray.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "No images yet";
+          zoneEl.appendChild(empty);
+        }
+      });
+      const narrow = window.matchMedia("(max-width: 700px)").matches;
+      if (!items.size) {
+        hint.textContent = narrow
+          ? "Add images, tap one, then tap a tier to lock it in."
+          : "Add images, then drag them into a tier to lock them in.";
+      } else if (selected) {
+        hint.textContent = "Tap a tier to lock the selected image in, or tap it again to cancel.";
+      } else {
+        hint.textContent = narrow
+          ? "Tap an image, then tap a tier. Double-tap a ranked image to send it back."
+          : "Drag an image into a tier to lock it in. Double-click a ranked image to send it back to the tray.";
+      }
+    }
+
+    document.querySelectorAll("[data-zone]").forEach(bindZone);
+
+    file.addEventListener("change", () => {
+      for (const f of file.files) {
+        const url = URL.createObjectURL(f);
+        const id = uid();
+        items.set(id, url);
+        order.tray.push(id);
+      }
+      file.value = "";
+      render();
+    });
+
+    document.getElementById("reset").addEventListener("click", () => {
+      TIERS.forEach((t) => {
+        order.tray.push(...order[t.id]);
+        order[t.id] = [];
+      });
+      render();
+    });
+
+    document.getElementById("clear").addEventListener("click", () => {
+      items.clear();
+      order.tray = [];
+      TIERS.forEach((t) => { order[t.id] = []; });
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

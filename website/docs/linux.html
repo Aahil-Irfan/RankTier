@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Linux — Tier List</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <nav>
+    <a class="logo" href="../index.html">TIER LIST</a>
+    <div class="links">
+      <a href="../index.html">Home</a>
+      <a href="../downloads/index.html">Downloads</a>
+      <a class="active" href="index.html">Docs</a>
+    </div>
+  </nav>
+  <section class="section">
+    <h1>Linux</h1>
+    <h2>Debian, Ubuntu, Mint, Pop!_OS</h2>
+    <pre><code>sudo apt install ./tierlist_1.0.0_amd64.deb
+tierlist</code></pre>
+    <h2>Fedora, RHEL, Rocky, Alma, openSUSE</h2>
+    <pre><code>sudo dnf install ./tierlist-1.0.0-1.x86_64.rpm
+# or: sudo rpm -i ./tierlist-1.0.0-1.x86_64.rpm
+tierlist</code></pre>
+    <h2>Arch, Manjaro, EndeavourOS</h2>
+    <pre><code>makepkg -si</code></pre>
+    <p>Put the matching tarball next to the downloaded <a href="../downloads/PKGBUILD">PKGBUILD</a> first.</p>
+    <h2>Any other distro</h2>
+    <pre><code>tar -xzf tierlist-1.0.0-linux-amd64.tar.gz
+cd tierlist-1.0.0-linux-amd64
+./install.sh
+# or: ./tierlist</code></pre>
+    <p>Alpine users typically need <code>apk add gcompat</code> before running the glibc binary, or run the web app instead.</p>
+    <p><a href="index.html">Back to docs</a></p>
+  </section>
+</body>
+</html>

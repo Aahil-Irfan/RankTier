@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Downloads — Tier List</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <nav>
+    <a class="logo" href="../index.html">TIER LIST</a>
+    <div class="links">
+      <a href="../index.html">Home</a>
+      <a href="../app/index.html">Open app</a>
+      <a class="active" href="index.html">Downloads</a>
+      <a href="../docs/index.html">Docs</a>
+    </div>
+  </nav>
+
+  <section class="section">
+    <h1>Downloads</h1>
+    <p class="lead">Version 1.0.0. Verify files with <a href="SHA256SUMS.txt">SHA256SUMS.txt</a>.</p>
+
+    <h2 id="windows">Windows</h2>
+    <div class="table-wrap"><table>
+      <tr><th>File</th><th>What it is</th></tr>
+      <tr>
+        <td><a href="TierList-1.0.0-windows-amd64.exe">TierList-1.0.0-windows-amd64.exe</a></td>
+        <td>64-bit Windows executable. Double-click to run.</td>
+      </tr>
+      <tr>
+        <td><a href="TierList-1.0.0-windows-arm64.exe">TierList-1.0.0-windows-arm64.exe</a></td>
+        <td>Windows on ARM (Snapdragon / Copilot+ PCs).</td>
+      </tr>
+      <tr>
+        <td><a href="TierList-1.0.0-windows-amd64.zip">TierList-1.0.0-windows-amd64.zip</a></td>
+        <td>Same amd64 exe plus a short README.</td>
+      </tr>
+    </table></div>
+
+    <h2 id="linux">Linux — all common distros</h2>
+    <div class="table-wrap"><table>
+      <tr><th>File</th><th>Distros</th></tr>
+      <tr>
+        <td><a href="tierlist_1.0.0_amd64.deb">tierlist_1.0.0_amd64.deb</a></td>
+        <td>Debian, Ubuntu, Linux Mint, Pop!_OS, Elementary, Zorin, Raspberry Pi OS (64-bit x86)</td>
+      </tr>
+      <tr>
+        <td><a href="tierlist_1.0.0_arm64.deb">tierlist_1.0.0_arm64.deb</a></td>
+        <td>Debian/Ubuntu on ARM64 (Apple Silicon VMs, Pi 4/5 64-bit)</td>
+      </tr>
+      <tr>
+        <td><a href="tierlist-1.0.0-1.x86_64.rpm">tierlist-1.0.0-1.x86_64.rpm</a></td>
+        <td>Fedora, RHEL, CentOS Stream, Rocky, AlmaLinux, openSUSE (x86_64)</td>
+      </tr>
+      <tr>
+        <td><a href="tierlist-1.0.0-1.aarch64.rpm">tierlist-1.0.0-1.aarch64.rpm</a></td>
+        <td>Fedora/RHEL-family on aarch64</td>
+      </tr>
+      <tr>
+        <td><a href="PKGBUILD">PKGBUILD</a></td>
+        <td>Arch Linux, Manjaro, EndeavourOS — build with <code>makepkg -si</code></td>
+      </tr>
+      <tr>
+        <td><a href="tierlist-1.0.0-linux-amd64.tar.gz">tierlist-1.0.0-linux-amd64.tar.gz</a></td>
+        <td>Any x86_64 distro, including Alpine (via gcompat), Gentoo, Slackware, NixOS (unfree-style manual install), Void</td>
+      </tr>
+      <tr>
+        <td><a href="tierlist-1.0.0-linux-arm64.tar.gz">tierlist-1.0.0-linux-arm64.tar.gz</a></td>
+        <td>Any aarch64 distro</td>
+      </tr>
+      <tr>
+        <td><a href="install.sh">install.sh</a></td>
+        <td>Universal user install. Extract a tarball, then run this script.</td>
+      </tr>
+    </table></div>
+    <p class="small">Tarballs include <code>install.sh</code>. After extract: <code>./install.sh</code> — or copy <code>tierlist</code> onto your <code>PATH</code>.</p>
+
+    <h2 id="apple">For Apple</h2>
+    <div class="table-wrap"><table>
+      <tr>
+        <td><a href="TierList-For-Apple-1.0.0.zip">TierList-For-Apple-1.0.0.zip</a></td>
+        <td>One SwiftUI project for iPhone, iPad, and Mac. Open in Xcode 15+.</td>
+      </tr>
+    </table></div>
+
+    <h2 id="web">Offline website / app</h2>
+    <div class="table-wrap"><table>
+      <tr>
+        <td><a href="tierlist-web-1.0.0.zip">tierlist-web-1.0.0.zip</a></td>
+        <td>Static site: landing page + in-browser app. Open <code>index.html</code> or serve the folder.</td>
+      </tr>
+    </table></div>
+  </section>
+  <footer>Tier List 1.0.0 · <a href="../docs/index.html">Install guides</a></footer>
+</body>
+</html>
