@@ -1,17 +1,23 @@
-# Tier List
+# RankTier
 
-A tiermaker-style **S–F ranking board**. Upload images, drag them into a tier, and they stay locked there until you move them.
+Live site: [https://ranktier.netlify.app](https://ranktier.netlify.app)
+
+A free **S–F ranking board**. Upload images, drag them into a tier, and they stay locked there until you move them.
 
 | Platform | What you get |
 | --- | --- |
-| **Website** | Use the app in a browser and download every build |
-| **Windows** | `TierList.exe` |
+| **Website** | Use RankTier in the browser at [ranktier.netlify.app](https://ranktier.netlify.app) |
+| **Windows** | Windows `.exe` from the [downloads page](https://ranktier.netlify.app/downloads/) |
 | **Linux** | `.deb`, `.rpm`, Arch `PKGBUILD`, tarballs, `install.sh` |
 | **For Apple** | One SwiftUI project for iPhone, iPad, and Mac |
 
 ## Quick start
 
-Serve the website (app + downloads):
+Open the live site:
+
+**[https://ranktier.netlify.app](https://ranktier.netlify.app)**
+
+Or serve the site locally:
 
 ```bash
 cd website
@@ -32,7 +38,7 @@ go run .
 ```
 TierListApp/          SwiftUI app for iPhone, iPad, and Mac
 desktop/              Go desktop wrapper (embeds the web app)
-website/              Public site, in-browser app, download folder
+website/              Public RankTier site, in-browser app, download folder
 packaging/            Linux installers and package metadata
 docs/                 Markdown install guides
 scripts/build_release.sh
