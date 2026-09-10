@@ -4,5 +4,7 @@ desktop/tierlist
 desktop/TierList.exe
 desktop/tierlist.exe
 /build/
+backend/data/
+node_modules/
 *.pyc
 __pycache__/

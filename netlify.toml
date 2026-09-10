@@ -1,2 +1,15 @@
 [build]
   publish = "website"
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/lists"
+  to = "/.netlify/functions/lists"
+  status = 200
+
+[[redirects]]
+  from = "/api/lists/*"
+  to = "/.netlify/functions/lists"
+  status = 200

@@ -72,6 +72,28 @@
     button.primary, label.btn.primary { background: #ff8c2e; color: #111; }
     button.danger { background: #3a1d1d; color: #ffb4b4; }
     #file { display: none; }
+    .savebar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 16px;
+      background: #111;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .savebar input, .savebar select {
+      appearance: none;
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: #1c1c1e;
+      color: #fff;
+      font: inherit;
+      min-height: 44px;
+      padding: 8px 10px;
+    }
+    .savebar input { flex: 1 1 160px; min-width: 140px; }
+    .savebar select { flex: 1 1 140px; }
+    .save-status { color: rgba(255,255,255,0.55); font-size: 13px; }
     main { padding: 16px; max-width: 1200px; margin: 0 auto; }
     .board {
       display: flex;
@@ -169,6 +191,14 @@
       <button type="button" class="danger" id="clear">Clear all</button>
     </div>
   </header>
+  <div class="savebar">
+    <input id="list-title" type="text" maxlength="80" placeholder="List title" value="Untitled list" />
+    <select id="saved-lists" aria-label="Saved lists">
+      <option value="">Saved lists</option>
+    </select>
+    <button type="button" id="new-list">New list</button>
+    <span class="save-status" id="save-status">Lists save automatically</span>
+  </div>
   <main>
     <div class="board" id="board"></div>
     <p class="hint" id="hint">Add images, then drag them into a tier to lock them in.</p>
@@ -187,11 +217,17 @@
     const items = new Map();
     const order = { tray: [] };
     let selected = null;
+    let listId = crypto.randomUUID();
+    let saveTimer = 0;
+    let hydrating = false;
     TIERS.forEach((t) => { order[t.id] = []; });
 
     const board = document.getElementById("board");
     const hint = document.getElementById("hint");
     const file = document.getElementById("file");
+    const titleInput = document.getElementById("list-title");
+    const savedSelect = document.getElementById("saved-lists");
+    const saveStatus = document.getElementById("save-status");
 
     if (location.protocol === "file:" || !document.referrer && location.pathname.endsWith("/index.html") === false) {
       const link = document.getElementById("home-link");
@@ -226,6 +262,7 @@
       const at = Math.min(Math.max(index ?? list.length, 0), list.length);
       list.splice(at, 0, id);
       render();
+      queueSave();
     }
 
     function tileFor(id) {
@@ -315,15 +352,134 @@
 
     document.querySelectorAll("[data-zone]").forEach(bindZone);
 
-    file.addEventListener("change", () => {
+    function snapshot() {
+      return {
+        id: listId,
+        title: titleInput.value.trim() || "Untitled list",
+        updatedAt: new Date().toISOString(),
+        order: Object.fromEntries(Object.entries(order).map(([k, v]) => [k, [...v]])),
+        items: Object.fromEntries(items),
+      };
+    }
+
+    function applyList(data) {
+      hydrating = true;
+      listId = data.id || uid();
+      titleInput.value = data.title || "Untitled list";
+      items.clear();
+      Object.entries(data.items || {}).forEach(([id, src]) => items.set(id, src));
+      order.tray = [];
+      TIERS.forEach((t) => { order[t.id] = []; });
+      const incoming = data.order || {};
+      ["tray", ...TIERS.map((t) => t.id)].forEach((zone) => {
+        order[zone] = (incoming[zone] || []).filter((id) => items.has(id));
+      });
+      hydrating = false;
+      render();
+    }
+
+    function emptyBoard() {
+      items.clear();
+      order.tray = [];
+      TIERS.forEach((t) => { order[t.id] = []; });
+    }
+
+    function setStatus(text) {
+      saveStatus.textContent = text;
+    }
+
+    async function refreshSavedOptions() {
+      const current = listId;
+      let lists = [];
+      try {
+        const res = await fetch("/api/lists");
+        if (res.ok) lists = await res.json();
+      } catch {
+        const cached = localStorage.getItem("ranktier:index");
+        lists = cached ? JSON.parse(cached) : [];
+      }
+      savedSelect.replaceChildren();
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = lists.length ? "Open a saved list" : "No saved lists yet";
+      savedSelect.appendChild(placeholder);
+      lists.forEach((list) => {
+        const opt = document.createElement("option");
+        opt.value = list.id;
+        opt.textContent = `${list.title} (${list.itemCount || 0})`;
+        if (list.id === current) opt.selected = true;
+        savedSelect.appendChild(opt);
+      });
+    }
+
+    async function persist() {
+      if (hydrating) return;
+      const data = snapshot();
+      localStorage.setItem("ranktier:current", JSON.stringify(data));
+      localStorage.setItem("ranktier:last-id", data.id);
+      try {
+        const res = await fetch("/api/lists", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error("save failed");
+        setStatus("Saved");
+        await refreshSavedOptions();
+      } catch {
+        setStatus("Saved on this device");
+      }
+    }
+
+    function queueSave() {
+      if (hydrating) return;
+      setStatus("Saving…");
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(persist, 400);
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const max = 280;
+          let w = img.width;
+          let h = img.height;
+          if (w > max || h > max) {
+            const scale = max / Math.max(w, h);
+            w = Math.round(w * scale);
+            h = Math.round(h * scale);
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL("image/jpeg", 0.72));
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("Could not read image"));
+        };
+        img.src = url;
+      });
+    }
+
+    file.addEventListener("change", async () => {
       for (const f of file.files) {
-        const url = URL.createObjectURL(f);
-        const id = uid();
-        items.set(id, url);
-        order.tray.push(id);
+        try {
+          const src = await fileToDataUrl(f);
+          const id = uid();
+          items.set(id, src);
+          order.tray.push(id);
+        } catch {
+          setStatus("Skipped an unreadable image");
+        }
       }
       file.value = "";
       render();
+      queueSave();
     });
 
     document.getElementById("reset").addEventListener("click", () => {
@@ -332,16 +488,64 @@
         order[t.id] = [];
       });
       render();
+      queueSave();
     });
 
     document.getElementById("clear").addEventListener("click", () => {
-      items.clear();
-      order.tray = [];
-      TIERS.forEach((t) => { order[t.id] = []; });
+      emptyBoard();
       render();
+      queueSave();
     });
 
+    titleInput.addEventListener("input", queueSave);
+
+    document.getElementById("new-list").addEventListener("click", () => {
+      listId = uid();
+      titleInput.value = "Untitled list";
+      emptyBoard();
+      render();
+      history.replaceState({}, "", location.pathname);
+      queueSave();
+    });
+
+    savedSelect.addEventListener("change", async () => {
+      const id = savedSelect.value;
+      if (!id) return;
+      try {
+        const res = await fetch(`/api/lists/${id}`);
+        if (res.ok) {
+          applyList(await res.json());
+          history.replaceState({}, "", `?list=${id}`);
+          queueSave();
+          return;
+        }
+      } catch { /* use local copy */ }
+      const cached = localStorage.getItem("ranktier:current");
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data.id === id) applyList(data);
+      }
+    });
+
+    async function boot() {
+      const wanted = new URLSearchParams(location.search).get("list") || localStorage.getItem("ranktier:last-id");
+      if (wanted) {
+        try {
+          const res = await fetch(`/api/lists/${wanted}`);
+          if (res.ok) {
+            applyList(await res.json());
+            await refreshSavedOptions();
+            return;
+          }
+        } catch { /* fall through */ }
+        const cached = localStorage.getItem("ranktier:current");
+        if (cached) applyList(JSON.parse(cached));
+      }
+      await refreshSavedOptions();
+    }
+
     render();
+    boot();
   </script>
 </body>
 </html>

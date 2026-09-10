@@ -17,14 +17,13 @@ Open the live site:
 
 **[https://ranktier.netlify.app](https://ranktier.netlify.app)**
 
-Or serve the site locally:
+Or serve the site locally (this also saves lists):
 
 ```bash
-cd website
-python3 -m http.server 8765
+npm start
 ```
 
-Then open [http://127.0.0.1:8765/](http://127.0.0.1:8765/).
+Then open [http://127.0.0.1:8765/](http://127.0.0.1:8765/). Tier lists auto-save to `backend/data/` and come back after a refresh.
 
 Or run the desktop helper from source:
 
@@ -39,6 +38,7 @@ go run .
 TierListApp/          SwiftUI app for iPhone, iPad, and Mac
 desktop/              Go desktop wrapper (embeds the web app)
 website/              Public RankTier site, in-browser app, download folder
+backend/              Local list-saving API (Netlify Functions on the live site)
 packaging/            Linux installers and package metadata
 docs/                 Markdown install guides
 scripts/build_release.sh
@@ -50,6 +50,7 @@ scripts/build_release.sh
 - [Install on Linux](docs/LINUX.md)
 - [Build for Apple](docs/SWIFT.md)
 - [Build all release files](docs/BUILD.md)
+- [Backend / saving lists](backend/README.md)
 
 ## License
 
