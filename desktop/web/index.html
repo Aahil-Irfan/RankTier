@@ -6,6 +6,13 @@
   <meta name="theme-color" content="#000000" />
   <title>RankTier</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%23ff4f4f' width='64' height='64' rx='10'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='36' font-family='system-ui' font-weight='800'%3ES%3C/text%3E%3C/svg%3E" />
+  <script>
+    document.documentElement.classList.toggle(
+      "choose",
+      !new URLSearchParams(location.search).get("type") &&
+      !new URLSearchParams(location.search).get("list")
+    );
+  </script>
   <style>
     :root {
       --bg: #000;
@@ -277,6 +284,78 @@
       border-radius: 2px;
     }
     .mode-iceberg .hint { text-align: center; }
+    html.choose header, html.choose .savebar, html.choose main { display: none !important; }
+    html:not(.choose) .chooser { display: none; }
+    .chooser {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 28px 16px;
+      padding-top: max(28px, env(safe-area-inset-top));
+    }
+    .chooser-home {
+      position: absolute;
+      top: max(16px, env(safe-area-inset-top));
+      left: 16px;
+      color: rgba(255,255,255,0.65);
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .chooser-home:hover { color: #fff; }
+    .chooser-inner { width: min(720px, 100%); text-align: center; }
+    .chooser-kicker {
+      margin: 0 0 8px;
+      color: #ff8c2e;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .chooser-inner h2 {
+      margin: 0 0 24px;
+      font-size: clamp(28px, 6vw, 40px);
+    }
+    .chooser-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .chooser-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: left;
+      text-decoration: none;
+      color: #fff;
+      background: #141416;
+      border: 1px solid #2a2a2e;
+      border-radius: 14px;
+      padding: 20px;
+      min-height: 180px;
+    }
+    .chooser-card:hover { border-color: #fff; }
+    .chooser-card strong { font-size: 20px; }
+    .chooser-card span { color: rgba(255,255,255,0.62); font-size: 14px; }
+    .mini-sf, .mini-ice {
+      display: flex;
+      overflow: hidden;
+      border-radius: 6px;
+      height: 44px;
+    }
+    .mini-sf i { flex: 1; }
+    .mini-sf .s { background: #ff4f4f; }
+    .mini-sf .a { background: #ff8c2e; }
+    .mini-sf .b { background: #ffcc33; }
+    .mini-sf .c { background: #8cd652; }
+    .mini-sf .d { background: #61baf2; }
+    .mini-sf .f { background: #ba9eed; }
+    .mini-ice { flex-direction: column; }
+    .mini-ice i { flex: 1; }
+    .mini-ice i:nth-child(1) { background: #d6eef7; }
+    .mini-ice i:nth-child(2) { background: #6aa7c3; }
+    .mini-ice i:nth-child(3) { background: #3a7ea0; }
+    .mini-ice i:nth-child(4) { background: #1a3e59; }
+    .mini-ice i:nth-child(5) { background: #08131e; }
     @media (max-width: 700px) {
       :root { --label: 48px; --tile: 64px; --tray-tile: 64px; }
       header { flex-direction: column; align-items: stretch; }
@@ -288,6 +367,7 @@
       .mode-iceberg .label { font-size: 7px; max-width: 58%; }
       .mode-iceberg .tile { width: 36px; height: 36px; }
       .mode-iceberg .tray .tile { width: min(44px, 100%); }
+      .chooser-grid { grid-template-columns: 1fr; }
       main { padding: 12px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
     }
   </style>
@@ -297,6 +377,8 @@
     <div class="brand">
       <h1>RankTier</h1>
       <a href="../index.html" id="home-link" hidden>Home</a>
+      <a href="index.html" id="boards-link">Boards</a>
+      <a href="index.html?type=iceberg" id="mode-link">Iceberg</a>
     </div>
     <div class="actions">
       <label class="btn primary" for="file">Add Images</label>
@@ -320,6 +402,25 @@
       <div class="tray" id="tray" data-zone="tray"></div>
     </div>
   </main>
+  <div class="chooser" id="chooser">
+    <a class="chooser-home" href="../index.html" hidden>Home</a>
+    <div class="chooser-inner">
+      <p class="chooser-kicker">Choose a board</p>
+      <h2>How do you want to rank?</h2>
+      <div class="chooser-grid">
+        <a class="chooser-card" href="index.html?type=classic">
+          <div class="mini-sf" aria-hidden="true"><i class="s"></i><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i><i class="f"></i></div>
+          <strong>S–F board</strong>
+          <span>Classic tiers from S down to F.</span>
+        </a>
+        <a class="chooser-card" href="index.html?type=iceberg">
+          <div class="mini-ice" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <strong>Iceberg</strong>
+          <span>Well-known at the top, obscure at the bottom.</span>
+        </a>
+      </div>
+    </div>
+  </div>
   <script>
     const CLASSIC_TIERS = [
       { id: "s", label: "S" },
@@ -365,6 +466,8 @@
       const link = document.getElementById("home-link");
       if (link && (location.protocol === "file:" || !location.pathname.includes("/app"))) {
         link.hidden = location.protocol !== "http:" && location.protocol !== "https:";
+        const chooserHome = document.querySelector(".chooser-home");
+        if (chooserHome) chooserHome.hidden = link.hidden;
       }
     }
 
@@ -372,6 +475,16 @@
       document.body.classList.toggle("mode-iceberg", listType === "iceberg");
       board.classList.toggle("iceberg", listType === "iceberg");
       document.title = listType === "iceberg" ? "RankTier Iceberg" : "RankTier";
+      const modeLink = document.getElementById("mode-link");
+      if (modeLink) {
+        if (listType === "iceberg") {
+          modeLink.href = "index.html?type=classic";
+          modeLink.textContent = "S–F board";
+        } else {
+          modeLink.href = "index.html?type=iceberg";
+          modeLink.textContent = "Iceberg";
+        }
+      }
       if (listType === "iceberg" && titleInput.value === "Untitled list") {
         titleInput.value = "Untitled iceberg";
       }
@@ -414,7 +527,7 @@
 
     function listUrl(id) {
       const q = new URLSearchParams();
-      if (listType === "iceberg") q.set("type", "iceberg");
+      q.set("type", listType === "iceberg" ? "iceberg" : "classic");
       if (id) q.set("list", id);
       const query = q.toString();
       return location.pathname + (query ? `?${query}` : "");
@@ -528,8 +641,12 @@
       }
     }
 
-    rebuildBoard();
-    bindZone(document.getElementById("tray"));
+    if (document.documentElement.classList.contains("choose")) {
+      document.title = "RankTier";
+    } else {
+      rebuildBoard();
+      bindZone(document.getElementById("tray"));
+    }
 
     function snapshot() {
       return {
@@ -558,6 +675,7 @@
       rebuildBoard();
       hydrating = false;
       render();
+      history.replaceState({}, "", listUrl(listId));
     }
 
     function emptyBoard() {
@@ -738,8 +856,10 @@
       await refreshSavedOptions();
     }
 
-    render();
-    boot();
+    if (!document.documentElement.classList.contains("choose")) {
+      render();
+      boot();
+    }
   </script>
 </body>
 </html>
