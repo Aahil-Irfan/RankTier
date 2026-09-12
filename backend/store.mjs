@@ -25,6 +25,7 @@ export async function listSummaries() {
     const data = JSON.parse(raw);
     summaries.push({
       id: data.id,
+      type: data.type === "iceberg" ? "iceberg" : "classic",
       title: data.title || "Untitled list",
       updatedAt: data.updatedAt,
       itemCount: Object.keys(data.items || {}).length,
@@ -49,6 +50,7 @@ export async function saveList(data) {
   if (!data || !data.id) throw new Error("Missing list id");
   const record = {
     id: data.id,
+    type: data.type === "iceberg" ? "iceberg" : "classic",
     title: String(data.title || "Untitled list").slice(0, 80),
     updatedAt: new Date().toISOString(),
     order: data.order || {},

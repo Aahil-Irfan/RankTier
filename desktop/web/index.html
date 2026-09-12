@@ -168,12 +168,45 @@
       font-size: 14px;
       padding: 28px 8px;
     }
+    body.mode-iceberg {
+      background: linear-gradient(#87c6e6 0%, #0a1c2c 28%, #02080e 100%);
+    }
+    .board.iceberg {
+      max-width: 760px;
+      margin: 0 auto;
+      gap: 0;
+      background: #041018;
+      clip-path: polygon(50% 0, 80% 15%, 100% 34%, 100% 100%, 0 100%, 0 34%, 20% 15%);
+    }
+    .mode-iceberg .row { min-height: 72px; }
+    .mode-iceberg .label {
+      flex: 0 0 132px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      line-height: 1.15;
+      text-align: center;
+      padding: 6px;
+      color: #e8f4ff;
+      background: transparent;
+    }
+    .mode-iceberg .row.surface { background: #c8e8f6; }
+    .mode-iceberg .row.surface .label { color: #16324a; }
+    .mode-iceberg .row.below { background: #7eb8d8; }
+    .mode-iceberg .row.below .label { color: #123044; }
+    .mode-iceberg .row.upper-limbo { background: #4a8fb5; }
+    .mode-iceberg .row.lower-limbo { background: #2f6a8f; }
+    .mode-iceberg .row.depths { background: #1c4a6e; }
+    .mode-iceberg .row.abyss { background: #0f2d4a; }
+    .mode-iceberg .row.void { background: #061525; }
+    .mode-iceberg .drop { min-height: 72px; }
     @media (max-width: 700px) {
       :root { --label: 48px; --tile: 64px; --tray-tile: 64px; }
       header { flex-direction: column; align-items: stretch; }
       .actions { width: 100%; }
       .actions .btn, .actions button { flex: 1; justify-content: center; }
       .label { font-size: 26px; }
+      .mode-iceberg .label { flex: 0 0 88px; font-size: 8px; }
       main { padding: 12px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
     }
   </style>
@@ -205,7 +238,7 @@
     <div class="tray" id="tray" data-zone="tray"></div>
   </main>
   <script>
-    const TIERS = [
+    const CLASSIC_TIERS = [
       { id: "s", label: "S" },
       { id: "a", label: "A" },
       { id: "b", label: "B" },
@@ -213,6 +246,19 @@
       { id: "d", label: "D" },
       { id: "f", label: "F" },
     ];
+    const ICEBERG_TIERS = [
+      { id: "surface", label: "THE SURFACE" },
+      { id: "below", label: "JUST BELOW THE SURFACE" },
+      { id: "upper-limbo", label: "UPPER LIMBO" },
+      { id: "lower-limbo", label: "LOWER LIMBO" },
+      { id: "depths", label: "THE DEPTHS" },
+      { id: "abyss", label: "THE ABYSS" },
+      { id: "void", label: "THE VOID" },
+    ];
+
+    const params = new URLSearchParams(location.search);
+    let listType = params.get("type") === "iceberg" ? "iceberg" : "classic";
+    const TIERS = () => (listType === "iceberg" ? ICEBERG_TIERS : CLASSIC_TIERS);
 
     const items = new Map();
     const order = { tray: [] };
@@ -220,7 +266,7 @@
     let listId = crypto.randomUUID();
     let saveTimer = 0;
     let hydrating = false;
-    TIERS.forEach((t) => { order[t.id] = []; });
+    [...CLASSIC_TIERS, ...ICEBERG_TIERS].forEach((t) => { order[t.id] = []; });
 
     const board = document.getElementById("board");
     const hint = document.getElementById("hint");
@@ -236,15 +282,41 @@
       }
     }
 
-    TIERS.forEach((t) => {
-      const row = document.createElement("div");
-      row.className = `row ${t.id}`;
-      row.innerHTML = `<div class="label">${t.label}</div><div class="drop" data-zone="${t.id}"></div>`;
-      board.appendChild(row);
-    });
+    function applyMode() {
+      document.body.classList.toggle("mode-iceberg", listType === "iceberg");
+      board.classList.toggle("iceberg", listType === "iceberg");
+      document.title = listType === "iceberg" ? "RankTier Iceberg" : "RankTier";
+      if (listType === "iceberg" && titleInput.value === "Untitled list") {
+        titleInput.value = "Untitled iceberg";
+      }
+    }
+
+    function rebuildBoard() {
+      applyMode();
+      board.replaceChildren();
+      TIERS().forEach((t) => {
+        const row = document.createElement("div");
+        row.className = `row ${t.id}`;
+        row.innerHTML = `<div class="label">${t.label}</div><div class="drop" data-zone="${t.id}"></div>`;
+        board.appendChild(row);
+      });
+      board.querySelectorAll("[data-zone]").forEach(bindZone);
+    }
 
     function uid() {
       return crypto.randomUUID();
+    }
+
+    function listUrl(id) {
+      const q = new URLSearchParams();
+      if (listType === "iceberg") q.set("type", "iceberg");
+      if (id) q.set("list", id);
+      const query = q.toString();
+      return location.pathname + (query ? `?${query}` : "");
+    }
+
+    function zoneIds() {
+      return ["tray", ...TIERS().map((t) => t.id)];
     }
 
     function findZone(id) {
@@ -338,9 +410,9 @@
       });
       const narrow = window.matchMedia("(max-width: 700px)").matches;
       if (!items.size) {
-        hint.textContent = narrow
-          ? "Add images, tap one, then tap a tier to lock it in."
-          : "Add images, then drag them into a tier to lock them in.";
+        hint.textContent = listType === "iceberg"
+          ? (narrow ? "Add images, tap one, then tap a layer. Surface is well-known; the void is the most obscure." : "Add images, then drag them into a layer. The surface is well-known; the void is the most obscure.")
+          : (narrow ? "Add images, tap one, then tap a tier to lock it in." : "Add images, then drag them into a tier to lock them in.");
       } else if (selected) {
         hint.textContent = "Tap a tier to lock the selected image in, or tap it again to cancel.";
       } else {
@@ -350,30 +422,34 @@
       }
     }
 
-    document.querySelectorAll("[data-zone]").forEach(bindZone);
+    rebuildBoard();
+    bindZone(document.getElementById("tray"));
 
     function snapshot() {
       return {
         id: listId,
-        title: titleInput.value.trim() || "Untitled list",
+        type: listType,
+        title: titleInput.value.trim() || (listType === "iceberg" ? "Untitled iceberg" : "Untitled list"),
         updatedAt: new Date().toISOString(),
-        order: Object.fromEntries(Object.entries(order).map(([k, v]) => [k, [...v]])),
+        order: Object.fromEntries(zoneIds().map((k) => [k, [...(order[k] || [])]])),
         items: Object.fromEntries(items),
       };
     }
 
     function applyList(data) {
       hydrating = true;
+      listType = data.type === "iceberg" ? "iceberg" : "classic";
       listId = data.id || uid();
-      titleInput.value = data.title || "Untitled list";
+      titleInput.value = data.title || (listType === "iceberg" ? "Untitled iceberg" : "Untitled list");
       items.clear();
       Object.entries(data.items || {}).forEach(([id, src]) => items.set(id, src));
       order.tray = [];
-      TIERS.forEach((t) => { order[t.id] = []; });
+      [...CLASSIC_TIERS, ...ICEBERG_TIERS].forEach((t) => { order[t.id] = []; });
       const incoming = data.order || {};
-      ["tray", ...TIERS.map((t) => t.id)].forEach((zone) => {
+      zoneIds().forEach((zone) => {
         order[zone] = (incoming[zone] || []).filter((id) => items.has(id));
       });
+      rebuildBoard();
       hydrating = false;
       render();
     }
@@ -381,7 +457,7 @@
     function emptyBoard() {
       items.clear();
       order.tray = [];
-      TIERS.forEach((t) => { order[t.id] = []; });
+      [...CLASSIC_TIERS, ...ICEBERG_TIERS].forEach((t) => { order[t.id] = []; });
     }
 
     function setStatus(text) {
@@ -398,6 +474,7 @@
         const cached = localStorage.getItem("ranktier:index");
         lists = cached ? JSON.parse(cached) : [];
       }
+      lists = lists.filter((list) => (list.type === "iceberg" ? "iceberg" : "classic") === listType);
       savedSelect.replaceChildren();
       const placeholder = document.createElement("option");
       placeholder.value = "";
@@ -483,8 +560,8 @@
     });
 
     document.getElementById("reset").addEventListener("click", () => {
-      TIERS.forEach((t) => {
-        order.tray.push(...order[t.id]);
+      TIERS().forEach((t) => {
+        order.tray.push(...(order[t.id] || []));
         order[t.id] = [];
       });
       render();
@@ -501,10 +578,10 @@
 
     document.getElementById("new-list").addEventListener("click", () => {
       listId = uid();
-      titleInput.value = "Untitled list";
+      titleInput.value = listType === "iceberg" ? "Untitled iceberg" : "Untitled list";
       emptyBoard();
       render();
-      history.replaceState({}, "", location.pathname);
+      history.replaceState({}, "", listUrl());
       queueSave();
     });
 
@@ -515,7 +592,7 @@
         const res = await fetch(`/api/lists/${id}`);
         if (res.ok) {
           applyList(await res.json());
-          history.replaceState({}, "", `?list=${id}`);
+          history.replaceState({}, "", listUrl(id));
           queueSave();
           return;
         }
@@ -527,20 +604,32 @@
       }
     });
 
+    function matchesMode(data) {
+      const type = data?.type === "iceberg" ? "iceberg" : "classic";
+      return type === listType;
+    }
+
     async function boot() {
-      const wanted = new URLSearchParams(location.search).get("list") || localStorage.getItem("ranktier:last-id");
+      const wanted = params.get("list") || localStorage.getItem("ranktier:last-id");
       if (wanted) {
         try {
           const res = await fetch(`/api/lists/${wanted}`);
           if (res.ok) {
-            applyList(await res.json());
-            await refreshSavedOptions();
-            return;
+            const data = await res.json();
+            if (params.get("list") || matchesMode(data)) {
+              applyList(data);
+              await refreshSavedOptions();
+              return;
+            }
           }
         } catch { /* fall through */ }
         const cached = localStorage.getItem("ranktier:current");
-        if (cached) applyList(JSON.parse(cached));
+        if (cached) {
+          const data = JSON.parse(cached);
+          if (params.get("list") || matchesMode(data)) applyList(data);
+        }
       }
+      applyMode();
       await refreshSavedOptions();
     }
 
