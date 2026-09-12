@@ -8,6 +8,11 @@ async function ensureDir() {
   await mkdir(root, { recursive: true });
 }
 
+function normalizeType(type) {
+  if (type === "iceberg" || type === "iceberg-drawn") return "iceberg";
+  return "classic";
+}
+
 function listPath(id) {
   if (!/^[a-zA-Z0-9-]{8,80}$/.test(id)) {
     throw new Error("Invalid list id");
@@ -25,7 +30,7 @@ export async function listSummaries() {
     const data = JSON.parse(raw);
     summaries.push({
       id: data.id,
-      type: data.type === "iceberg" ? "iceberg" : "classic",
+      type: normalizeType(data.type),
       title: data.title || "Untitled list",
       updatedAt: data.updatedAt,
       itemCount: Object.keys(data.items || {}).length,
@@ -50,7 +55,7 @@ export async function saveList(data) {
   if (!data || !data.id) throw new Error("Missing list id");
   const record = {
     id: data.id,
-    type: data.type === "iceberg" ? "iceberg" : "classic",
+    type: normalizeType(data.type),
     title: String(data.title || "Untitled list").slice(0, 80),
     updatedAt: new Date().toISOString(),
     order: data.order || {},

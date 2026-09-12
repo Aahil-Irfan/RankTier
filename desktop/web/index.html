@@ -95,6 +95,7 @@
     .savebar select { flex: 1 1 140px; }
     .save-status { color: rgba(255,255,255,0.55); font-size: 13px; }
     main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+    .stage { display: contents; }
     .board {
       display: flex;
       flex-direction: column;
@@ -189,6 +190,25 @@
       pointer-events: none;
       user-select: none;
     }
+    .mode-iceberg .stage {
+      display: grid;
+      grid-template-columns: minmax(0, 520px) 96px;
+      grid-template-rows: auto auto;
+      column-gap: 8px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .mode-iceberg .board {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .mode-iceberg .board.iceberg {
+      max-width: none;
+    }
+    .mode-iceberg .hint {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
     .mode-iceberg .row {
       position: absolute;
       left: 0;
@@ -225,23 +245,49 @@
       width: 100%;
       height: 100%;
       min-height: 0;
-      align-content: center;
-      padding: 18px 6px 4px;
+      align-content: flex-start;
+      padding: 22px 8px 4px;
     }
     .mode-iceberg .tile {
       width: 44px;
       height: 44px;
       border: 1px solid rgba(255,255,255,0.35);
     }
+    .mode-iceberg .tray {
+      grid-column: 2;
+      grid-row: 1;
+      position: static;
+      align-self: stretch;
+      min-height: 0;
+      margin: 0;
+      padding: 6px 4px;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 8px;
+      background: rgba(8, 12, 18, 0.72);
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: center;
+      align-content: flex-start;
+      overflow-y: auto;
+    }
+    .mode-iceberg .tray .tile {
+      width: min(72px, 100%);
+      height: auto;
+      aspect-ratio: 1;
+      border-radius: 2px;
+    }
+    .mode-iceberg .hint { text-align: center; }
     @media (max-width: 700px) {
       :root { --label: 48px; --tile: 64px; --tray-tile: 64px; }
       header { flex-direction: column; align-items: stretch; }
       .actions { width: 100%; }
       .actions .btn, .actions button { flex: 1; justify-content: center; }
       .label { font-size: 26px; }
-      .board.iceberg { max-width: 100%; }
+      .board.iceberg, .mode-iceberg .stage { max-width: 100%; }
+      .mode-iceberg .stage { grid-template-columns: minmax(0, 1fr) 72px; }
       .mode-iceberg .label { font-size: 7px; max-width: 58%; }
       .mode-iceberg .tile { width: 36px; height: 36px; }
+      .mode-iceberg .tray .tile { width: min(44px, 100%); }
       main { padding: 12px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
     }
   </style>
@@ -268,9 +314,11 @@
     <span class="save-status" id="save-status">Lists save automatically</span>
   </div>
   <main>
-    <div class="board" id="board"></div>
-    <p class="hint" id="hint">Add images, then drag them into a tier to lock them in.</p>
-    <div class="tray" id="tray" data-zone="tray"></div>
+    <div class="stage" id="stage">
+      <div class="board" id="board"></div>
+      <p class="hint" id="hint">Add images, then drag them into a tier to lock them in.</p>
+      <div class="tray" id="tray" data-zone="tray"></div>
+    </div>
   </main>
   <script>
     const CLASSIC_TIERS = [
@@ -290,9 +338,12 @@
       { id: "abyss", label: "THE ABYSS", top: 50.66, height: 9.13 },
       { id: "void", label: "THE VOID", top: 59.79, height: 40.21 },
     ];
-
     const params = new URLSearchParams(location.search);
-    let listType = params.get("type") === "iceberg" ? "iceberg" : "classic";
+    function normalizeType(type) {
+      if (type === "iceberg" || type === "iceberg-drawn") return "iceberg";
+      return "classic";
+    }
+    let listType = normalizeType(params.get("type"));
     const TIERS = () => (listType === "iceberg" ? ICEBERG_TIERS : CLASSIC_TIERS);
 
     const items = new Map();
@@ -326,6 +377,17 @@
       }
     }
 
+    function appendIcebergRows(parent) {
+      TIERS().forEach((t) => {
+        const row = document.createElement("div");
+        row.className = `row ${t.id}`;
+        row.style.top = `${t.top}%`;
+        row.style.height = `${t.height}%`;
+        row.innerHTML = `<div class="label">${t.label}</div><div class="drop" data-zone="${t.id}"></div>`;
+        parent.appendChild(row);
+      });
+    }
+
     function rebuildBoard() {
       applyMode();
       board.replaceChildren();
@@ -333,14 +395,7 @@
         const frame = document.createElement("div");
         frame.className = "iceberg-frame";
         frame.innerHTML = `<img src="iceberg-template.png" alt="Iceberg template">`;
-        TIERS().forEach((t) => {
-          const row = document.createElement("div");
-          row.className = `row ${t.id}`;
-          row.style.top = `${t.top}%`;
-          row.style.height = `${t.height}%`;
-          row.innerHTML = `<div class="label">${t.label}</div><div class="drop" data-zone="${t.id}"></div>`;
-          frame.appendChild(row);
-        });
+        appendIcebergRows(frame);
         board.appendChild(frame);
       } else {
         TIERS().forEach((t) => {
@@ -459,16 +514,17 @@
         }
       });
       const narrow = window.matchMedia("(max-width: 700px)").matches;
+      const place = listType === "iceberg" ? "layer" : "tier";
       if (!items.size) {
         hint.textContent = listType === "iceberg"
           ? (narrow ? "Add images, tap one, then tap a layer. Surface is well-known; the void is the most obscure." : "Add images, then drag them into a layer. The surface is well-known; the void is the most obscure.")
           : (narrow ? "Add images, tap one, then tap a tier to lock it in." : "Add images, then drag them into a tier to lock them in.");
       } else if (selected) {
-        hint.textContent = "Tap a tier to lock the selected image in, or tap it again to cancel.";
+        hint.textContent = `Tap a ${place} to lock the selected image in, or tap it again to cancel.`;
       } else {
         hint.textContent = narrow
-          ? "Tap an image, then tap a tier. Double-tap a ranked image to send it back."
-          : "Drag an image into a tier to lock it in. Double-click a ranked image to send it back to the tray.";
+          ? `Tap an image, then tap a ${place}. Double-tap a ranked image to send it back.`
+          : `Drag an image into a ${place} to lock it in. Double-click a ranked image to send it back to the tray.`;
       }
     }
 
@@ -488,7 +544,7 @@
 
     function applyList(data) {
       hydrating = true;
-      listType = data.type === "iceberg" ? "iceberg" : "classic";
+      listType = normalizeType(data.type);
       listId = data.id || uid();
       titleInput.value = data.title || (listType === "iceberg" ? "Untitled iceberg" : "Untitled list");
       items.clear();
@@ -524,7 +580,7 @@
         const cached = localStorage.getItem("ranktier:index");
         lists = cached ? JSON.parse(cached) : [];
       }
-      lists = lists.filter((list) => (list.type === "iceberg" ? "iceberg" : "classic") === listType);
+      lists = lists.filter((list) => normalizeType(list.type) === listType);
       savedSelect.replaceChildren();
       const placeholder = document.createElement("option");
       placeholder.value = "";
@@ -655,8 +711,7 @@
     });
 
     function matchesMode(data) {
-      const type = data?.type === "iceberg" ? "iceberg" : "classic";
-      return type === listType;
+      return normalizeType(data?.type) === listType;
     }
 
     async function boot() {

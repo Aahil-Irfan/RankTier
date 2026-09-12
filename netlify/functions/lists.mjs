@@ -7,6 +7,11 @@ const headers = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+function normalizeType(type) {
+  if (type === "iceberg" || type === "iceberg-drawn") return "iceberg";
+  return "classic";
+}
+
 function json(status, body) {
   return { statusCode: status, headers, body: JSON.stringify(body) };
 }
@@ -20,7 +25,7 @@ function listIdFromPath(pathname) {
 function summary(data) {
   return {
     id: data.id,
-    type: data.type === "iceberg" ? "iceberg" : "classic",
+    type: normalizeType(data.type),
     title: data.title || "Untitled list",
     updatedAt: data.updatedAt,
     itemCount: Object.keys(data.items || {}).length,
@@ -57,7 +62,7 @@ export async function handler(event) {
       if (!incoming.id) return json(400, { error: "Missing list id" });
       const record = {
         id: incoming.id,
-        type: incoming.type === "iceberg" ? "iceberg" : "classic",
+        type: normalizeType(incoming.type),
         title: String(incoming.title || "Untitled list").slice(0, 80),
         updatedAt: new Date().toISOString(),
         order: incoming.order || {},
