@@ -169,44 +169,79 @@
       padding: 28px 8px;
     }
     body.mode-iceberg {
-      background: linear-gradient(#87c6e6 0%, #0a1c2c 28%, #02080e 100%);
+      background: #061018;
     }
     .board.iceberg {
-      max-width: 760px;
+      max-width: 520px;
       margin: 0 auto;
-      gap: 0;
-      background: #041018;
-      clip-path: polygon(50% 0, 80% 15%, 100% 34%, 100% 100%, 0 100%, 0 34%, 20% 15%);
-    }
-    .mode-iceberg .row { min-height: 72px; }
-    .mode-iceberg .label {
-      flex: 0 0 132px;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      line-height: 1.15;
-      text-align: center;
-      padding: 6px;
-      color: #e8f4ff;
       background: transparent;
+      overflow: visible;
+      position: relative;
     }
-    .mode-iceberg .row.surface { background: #c8e8f6; }
-    .mode-iceberg .row.surface .label { color: #16324a; }
-    .mode-iceberg .row.below { background: #7eb8d8; }
-    .mode-iceberg .row.below .label { color: #123044; }
-    .mode-iceberg .row.upper-limbo { background: #4a8fb5; }
-    .mode-iceberg .row.lower-limbo { background: #2f6a8f; }
-    .mode-iceberg .row.depths { background: #1c4a6e; }
-    .mode-iceberg .row.abyss { background: #0f2d4a; }
-    .mode-iceberg .row.void { background: #061525; }
-    .mode-iceberg .drop { min-height: 72px; }
+    .iceberg-frame {
+      position: relative;
+      width: 100%;
+    }
+    .iceberg-frame > img {
+      width: 100%;
+      height: auto;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+    }
+    .mode-iceberg .row {
+      position: absolute;
+      left: 0;
+      right: 18.5%;
+      min-height: 0;
+      background: transparent;
+      border: 0;
+    }
+    .mode-iceberg .row.over {
+      outline: none;
+      background: rgba(255,255,255,0.12);
+    }
+    .mode-iceberg .label {
+      position: absolute;
+      left: 6px;
+      top: 4px;
+      z-index: 2;
+      flex: none;
+      width: auto;
+      max-width: 46%;
+      height: auto;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1.15;
+      text-align: left;
+      padding: 3px 6px;
+      color: #fff;
+      text-shadow: 0 1px 2px #000, 0 0 6px #000;
+      background: rgba(0,0,0,0.35);
+      border-radius: 3px;
+    }
+    .mode-iceberg .drop {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      align-content: center;
+      padding: 18px 6px 4px;
+    }
+    .mode-iceberg .tile {
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(255,255,255,0.35);
+    }
     @media (max-width: 700px) {
       :root { --label: 48px; --tile: 64px; --tray-tile: 64px; }
       header { flex-direction: column; align-items: stretch; }
       .actions { width: 100%; }
       .actions .btn, .actions button { flex: 1; justify-content: center; }
       .label { font-size: 26px; }
-      .mode-iceberg .label { flex: 0 0 88px; font-size: 8px; }
+      .board.iceberg { max-width: 100%; }
+      .mode-iceberg .label { font-size: 7px; max-width: 58%; }
+      .mode-iceberg .tile { width: 36px; height: 36px; }
       main { padding: 12px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
     }
   </style>
@@ -247,13 +282,13 @@
       { id: "f", label: "F" },
     ];
     const ICEBERG_TIERS = [
-      { id: "surface", label: "THE SURFACE" },
-      { id: "below", label: "JUST BELOW THE SURFACE" },
-      { id: "upper-limbo", label: "UPPER LIMBO" },
-      { id: "lower-limbo", label: "LOWER LIMBO" },
-      { id: "depths", label: "THE DEPTHS" },
-      { id: "abyss", label: "THE ABYSS" },
-      { id: "void", label: "THE VOID" },
+      { id: "surface", label: "THE SURFACE", top: 0, height: 9.53 },
+      { id: "below", label: "JUST BELOW THE SURFACE", top: 9.53, height: 9.56 },
+      { id: "upper-limbo", label: "UPPER LIMBO", top: 19.09, height: 11.27 },
+      { id: "lower-limbo", label: "LOWER LIMBO", top: 30.36, height: 10.06 },
+      { id: "depths", label: "THE DEPTHS", top: 40.42, height: 10.24 },
+      { id: "abyss", label: "THE ABYSS", top: 50.66, height: 9.13 },
+      { id: "void", label: "THE VOID", top: 59.79, height: 40.21 },
     ];
 
     const params = new URLSearchParams(location.search);
@@ -294,12 +329,27 @@
     function rebuildBoard() {
       applyMode();
       board.replaceChildren();
-      TIERS().forEach((t) => {
-        const row = document.createElement("div");
-        row.className = `row ${t.id}`;
-        row.innerHTML = `<div class="label">${t.label}</div><div class="drop" data-zone="${t.id}"></div>`;
-        board.appendChild(row);
-      });
+      if (listType === "iceberg") {
+        const frame = document.createElement("div");
+        frame.className = "iceberg-frame";
+        frame.innerHTML = `<img src="iceberg-template.png" alt="Iceberg template">`;
+        TIERS().forEach((t) => {
+          const row = document.createElement("div");
+          row.className = `row ${t.id}`;
+          row.style.top = `${t.top}%`;
+          row.style.height = `${t.height}%`;
+          row.innerHTML = `<div class="label">${t.label}</div><div class="drop" data-zone="${t.id}"></div>`;
+          frame.appendChild(row);
+        });
+        board.appendChild(frame);
+      } else {
+        TIERS().forEach((t) => {
+          const row = document.createElement("div");
+          row.className = `row ${t.id}`;
+          row.innerHTML = `<div class="label">${t.label}</div><div class="drop" data-zone="${t.id}"></div>`;
+          board.appendChild(row);
+        });
+      }
       board.querySelectorAll("[data-zone]").forEach(bindZone);
     }
 
