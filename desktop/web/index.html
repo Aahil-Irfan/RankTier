@@ -285,6 +285,19 @@
     }
     .mode-iceberg .hint { text-align: center; }
     html.choose header, html.choose .savebar, html.choose main { display: none !important; }
+    .credit {
+      text-align: center;
+      color: rgba(255,255,255,0.4);
+      font-size: 12px;
+      padding: 16px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+    html.choose .credit {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
     html:not(.choose) .chooser { display: none; }
     .chooser {
       min-height: 100dvh;
@@ -421,6 +434,7 @@
       </div>
     </div>
   </div>
+  <footer class="credit">Made by SDL (Aahil Irfan)</footer>
   <script>
     const CLASSIC_TIERS = [
       { id: "s", label: "S" },

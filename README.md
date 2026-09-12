@@ -54,4 +54,4 @@ scripts/build_release.sh
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Made by SDL (Aahil Irfan). MIT. See [LICENSE](LICENSE).
