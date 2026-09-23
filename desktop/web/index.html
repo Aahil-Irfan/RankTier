@@ -116,7 +116,7 @@
     label.btn { display: inline-flex; align-items: center; }
     button.primary, label.btn.primary { background: #ff8c2e; color: #111; }
     button.danger { background: var(--danger-bg); color: var(--danger-text); }
-    #file { display: none; }
+    #file, #folder { display: none; }
     .savebar {
       display: flex;
       flex-wrap: wrap;
@@ -441,6 +441,8 @@
     <div class="actions">
       <label class="btn primary" for="file">Add Images</label>
       <input id="file" type="file" accept="image/*" multiple />
+      <label class="btn" for="folder">Add Folder</label>
+      <input id="folder" type="file" accept="image/*" multiple webkitdirectory directory />
       <button type="button" id="reset">Reset ranks</button>
       <button type="button" class="danger" id="clear">Clear all</button>
       <button type="button" id="theme-toggle" data-theme-toggle>Light</button>
@@ -538,6 +540,7 @@
     const board = document.getElementById("board");
     const hint = document.getElementById("hint");
     const file = document.getElementById("file");
+    const folder = document.getElementById("folder");
     const titleInput = document.getElementById("list-title");
     const savedSelect = document.getElementById("saved-lists");
     const saveStatus = document.getElementById("save-status");
@@ -702,7 +705,7 @@
         if (zone === "tray" && order.tray.length === 0) {
           const empty = document.createElement("div");
           empty.className = "empty";
-          empty.textContent = "No images yet";
+          empty.textContent = "No images yet — add files or a folder";
           zoneEl.appendChild(empty);
         }
       });
@@ -710,8 +713,8 @@
       const place = listType === "iceberg" ? "layer" : "tier";
       if (!items.size) {
         hint.textContent = listType === "iceberg"
-          ? (narrow ? "Add images, tap one, then tap a layer. Surface is well-known; the void is the most obscure." : "Add images, then drag them into a layer. The surface is well-known; the void is the most obscure.")
-          : (narrow ? "Add images, tap one, then tap a tier to lock it in." : "Add images, then drag them into a tier to lock them in.");
+          ? (narrow ? "Add images or a folder, tap one, then tap a layer. Surface is well-known; the void is the most obscure." : "Add images or a folder, then drag them into a layer. The surface is well-known; the void is the most obscure.")
+          : (narrow ? "Add images or a folder, tap one, then tap a tier to lock it in." : "Add images or a folder, then drag them into a tier to lock them in.");
       } else if (selected) {
         hint.textContent = `Tap a ${place} to lock the selected image in, or tap it again to cancel.`;
       } else {
@@ -847,20 +850,99 @@
       });
     }
 
-    file.addEventListener("change", async () => {
-      for (const f of file.files) {
+    function isImageFile(entry) {
+      if (!entry || entry.name.startsWith(".")) return false;
+      if (entry.type && entry.type.startsWith("image/")) return true;
+      return /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(entry.name);
+    }
+
+    async function addFiles(fileList) {
+      const files = [...fileList].filter(isImageFile);
+      if (!files.length) {
+        setStatus("No images found");
+        return;
+      }
+      const cap = 150;
+      const batch = files.slice(0, cap);
+      let added = 0;
+      let skipped = 0;
+      setStatus(`Importing ${batch.length} image${batch.length === 1 ? "" : "s"}…`);
+      for (const f of batch) {
         try {
           const src = await fileToDataUrl(f);
           const id = uid();
           items.set(id, src);
           order.tray.push(id);
+          added += 1;
         } catch {
-          setStatus("Skipped an unreadable image");
+          skipped += 1;
         }
       }
-      file.value = "";
       render();
       queueSave();
+      const extra = files.length > cap ? ` Stopped at ${cap}.` : "";
+      setStatus(skipped ? `Added ${added}, skipped ${skipped}.${extra}` : `Added ${added} image${added === 1 ? "" : "s"}.${extra}`);
+    }
+
+    function readAllEntries(reader) {
+      return new Promise((resolve, reject) => {
+        const out = [];
+        const next = () => {
+          reader.readEntries((batch) => {
+            if (!batch.length) {
+              resolve(out);
+              return;
+            }
+            out.push(...batch);
+            next();
+          }, reject);
+        };
+        next();
+      });
+    }
+
+    async function filesFromEntry(entry) {
+      if (!entry) return [];
+      if (entry.isFile) {
+        const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+        return file ? [file] : [];
+      }
+      if (!entry.isDirectory) return [];
+      const children = await readAllEntries(entry.createReader());
+      const nested = await Promise.all(children.map(filesFromEntry));
+      return nested.flat();
+    }
+
+    async function filesFromDataTransfer(dt) {
+      const entries = [...(dt.items || [])].map((item) => item.webkitGetAsEntry?.()).filter(Boolean);
+      if (entries.length) {
+        const collected = (await Promise.all(entries.map(filesFromEntry))).flat();
+        if (collected.length) return collected;
+      }
+      return [...(dt.files || [])];
+    }
+
+    file.addEventListener("change", async () => {
+      await addFiles(file.files);
+      file.value = "";
+    });
+
+    folder.addEventListener("change", async () => {
+      await addFiles(folder.files);
+      folder.value = "";
+    });
+
+    const tray = document.getElementById("tray");
+    tray.addEventListener("dragover", (e) => {
+      if (![...e.dataTransfer.types].includes("Files")) return;
+      e.preventDefault();
+      tray.classList.add("over");
+    });
+    tray.addEventListener("drop", async (e) => {
+      if (![...e.dataTransfer.types].includes("Files")) return;
+      e.preventDefault();
+      tray.classList.remove("over");
+      await addFiles(await filesFromDataTransfer(e.dataTransfer));
     });
 
     document.getElementById("reset").addEventListener("click", () => {
