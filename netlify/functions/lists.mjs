@@ -9,7 +9,18 @@ const headers = {
 
 function normalizeType(type) {
   if (type === "iceberg" || type === "iceberg-drawn") return "iceberg";
+  if (type === "canvas" || type === "blank") return "canvas";
   return "classic";
+}
+
+function sanitizeTiers(raw) {
+  if (!Array.isArray(raw)) return [];
+  const colors = ["#ff4f4f", "#ff8c2e", "#ffcc33", "#8cd652", "#61baf2", "#ba9eed", "#f472b6", "#94a3b8"];
+  return raw.slice(0, 20).map((tier, i) => ({
+    id: /^[a-zA-Z0-9-]{2,40}$/.test(tier?.id) ? tier.id : `row-${i + 1}`,
+    label: String(tier?.label || `Row ${i + 1}`).slice(0, 24),
+    color: /^#[0-9a-fA-F]{6}$/.test(tier?.color) ? tier.color : colors[i % colors.length],
+  }));
 }
 
 function json(status, body) {
@@ -67,6 +78,7 @@ export async function handler(event) {
         updatedAt: new Date().toISOString(),
         order: incoming.order || {},
         items: incoming.items || {},
+        tiers: normalizeType(incoming.type) === "canvas" ? sanitizeTiers(incoming.tiers) : undefined,
       };
       await store.setJSON(record.id, record);
       return json(200, record);

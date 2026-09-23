@@ -360,7 +360,7 @@
       min-height: auto;
       padding: 0;
     }
-    .chooser-inner { width: min(720px, 100%); text-align: center; }
+    .chooser-inner { width: min(920px, 100%); text-align: center; }
     .chooser-kicker {
       margin: 0 0 8px;
       color: #ff8c2e;
@@ -375,7 +375,7 @@
     }
     .chooser-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 16px;
     }
     .chooser-card {
@@ -414,6 +414,60 @@
     .mini-ice i:nth-child(3) { background: #3a7ea0; }
     .mini-ice i:nth-child(4) { background: #1a3e59; }
     .mini-ice i:nth-child(5) { background: #08131e; }
+    .mini-canvas {
+      height: 44px;
+      border-radius: 6px;
+      border: 1px dashed var(--card-border);
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 18px,
+        var(--card-border) 18px,
+        var(--card-border) 19px
+      );
+    }
+    .mode-canvas .label {
+      font-size: 15px;
+      padding: 4px;
+      position: relative;
+    }
+    .row-name {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #111;
+      font: inherit;
+      font-weight: 800;
+      text-align: center;
+      min-height: 36px;
+    }
+    .row-tools {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      padding: 4px;
+      background: var(--bar);
+    }
+    .row-tools input[type="color"] {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .row-tools button {
+      min-height: 28px;
+      padding: 0 8px;
+      font-size: 16px;
+    }
+    .canvas-empty {
+      padding: 36px 16px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--row);
+    }
     @media (max-width: 700px) {
       :root { --label: 48px; --tile: 64px; --tray-tile: 64px; }
       header { flex-direction: column; align-items: stretch; }
@@ -455,6 +509,7 @@
       <input id="folder" type="file" accept="image/*" multiple webkitdirectory directory />
       <button type="button" class="editor-only" id="reset">Reset ranks</button>
       <button type="button" class="danger editor-only" id="clear">Clear all</button>
+      <button type="button" class="editor-only" id="add-row" hidden>Add row</button>
       <button type="button" id="theme-toggle" data-theme-toggle>Light</button>
     </div>
   </header>
@@ -491,6 +546,11 @@
           <div class="mini-ice" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
           <strong>Iceberg</strong>
           <span>Well-known at the top, obscure at the bottom.</span>
+        </a>
+        <a class="chooser-card" href="index.html?type=canvas">
+          <div class="mini-canvas" aria-hidden="true"></div>
+          <strong>Blank canvas</strong>
+          <span>Start empty and add your own rows.</span>
         </a>
       </div>
     </div>
@@ -535,12 +595,33 @@
 
     const params = new URLSearchParams(location.search);
     const readOnly = params.get("view") === "1" || params.get("view") === "true";
+    const CANVAS_COLORS = ["#ff4f4f", "#ff8c2e", "#ffcc33", "#8cd652", "#61baf2", "#ba9eed", "#f472b6", "#94a3b8"];
     function normalizeType(type) {
       if (type === "iceberg" || type === "iceberg-drawn") return "iceberg";
+      if (type === "canvas" || type === "blank") return "canvas";
+      return "classic";
+    }
+    function sanitizeTiers(raw) {
+      if (!Array.isArray(raw)) return [];
+      return raw.slice(0, 20).map((tier, i) => ({
+        id: /^[a-zA-Z0-9-]{2,40}$/.test(tier?.id) ? tier.id : `row-${i + 1}`,
+        label: String(tier?.label || `Row ${i + 1}`).slice(0, 24),
+        color: /^#[0-9a-fA-F]{6}$/.test(tier?.color) ? tier.color : CANVAS_COLORS[i % CANVAS_COLORS.length],
+      }));
+    }
+    function defaultTitle() {
+      if (listType === "iceberg") return "Untitled iceberg";
+      if (listType === "canvas") return "Untitled canvas";
+      return "Untitled list";
+    }
+    function typeParam() {
+      if (listType === "iceberg") return "iceberg";
+      if (listType === "canvas") return "canvas";
       return "classic";
     }
     let listType = normalizeType(params.get("type"));
-    const TIERS = () => (listType === "iceberg" ? ICEBERG_TIERS : CLASSIC_TIERS);
+    let customTiers = [];
+    const TIERS = () => (listType === "iceberg" ? ICEBERG_TIERS : listType === "canvas" ? customTiers : CLASSIC_TIERS);
 
     const items = new Map();
     const order = { tray: [] };
@@ -578,9 +659,12 @@
 
     function applyMode() {
       document.body.classList.toggle("mode-iceberg", listType === "iceberg");
+      document.body.classList.toggle("mode-canvas", listType === "canvas");
       board.classList.toggle("iceberg", listType === "iceberg");
-      document.title = (listType === "iceberg" ? "RankTier Iceberg" : "RankTier") + (readOnly ? " (view)" : "");
+      document.title = (listType === "iceberg" ? "RankTier Iceberg" : listType === "canvas" ? "RankTier Canvas" : "RankTier") + (readOnly ? " (view)" : "");
       applyViewMode();
+      const addRow = document.getElementById("add-row");
+      if (addRow) addRow.hidden = listType !== "canvas" || readOnly;
       const modeLink = document.getElementById("mode-link");
       if (modeLink) {
         if (listType === "iceberg") {
@@ -591,8 +675,8 @@
           modeLink.textContent = "Iceberg";
         }
       }
-      if (listType === "iceberg" && titleInput.value === "Untitled list") {
-        titleInput.value = "Untitled iceberg";
+      if (titleInput.value === "Untitled list" || titleInput.value === "Untitled iceberg" || titleInput.value === "Untitled canvas") {
+        titleInput.value = defaultTitle();
       }
     }
 
@@ -607,6 +691,55 @@
       });
     }
 
+    function appendCanvasRow(t) {
+      const row = document.createElement("div");
+      row.className = `row ${t.id}`;
+      const label = document.createElement("div");
+      label.className = "label";
+      label.style.background = t.color;
+      if (readOnly) {
+        label.textContent = t.label;
+      } else {
+        const name = document.createElement("input");
+        name.className = "row-name";
+        name.maxLength = 24;
+        name.value = t.label;
+        name.setAttribute("aria-label", "Row name");
+        name.addEventListener("input", () => {
+          t.label = name.value.slice(0, 24);
+          queueSave();
+        });
+        label.appendChild(name);
+      }
+      const drop = document.createElement("div");
+      drop.className = "drop";
+      drop.dataset.zone = t.id;
+      row.appendChild(label);
+      row.appendChild(drop);
+      if (!readOnly) {
+        const tools = document.createElement("div");
+        tools.className = "row-tools";
+        const color = document.createElement("input");
+        color.type = "color";
+        color.value = t.color;
+        color.setAttribute("aria-label", "Row color");
+        color.addEventListener("input", () => {
+          t.color = color.value;
+          label.style.background = t.color;
+          queueSave();
+        });
+        const del = document.createElement("button");
+        del.type = "button";
+        del.textContent = "×";
+        del.setAttribute("aria-label", "Delete row");
+        del.addEventListener("click", () => removeCanvasRow(t.id));
+        tools.appendChild(color);
+        tools.appendChild(del);
+        row.appendChild(tools);
+      }
+      return row;
+    }
+
     function rebuildBoard() {
       applyMode();
       board.replaceChildren();
@@ -616,6 +749,15 @@
         frame.innerHTML = `<img src="iceberg-template.png" alt="Iceberg template">`;
         appendIcebergRows(frame);
         board.appendChild(frame);
+      } else if (listType === "canvas") {
+        if (!customTiers.length) {
+          const empty = document.createElement("div");
+          empty.className = "canvas-empty";
+          empty.textContent = readOnly ? "This canvas has no rows." : "Add a row to start ranking.";
+          board.appendChild(empty);
+        } else {
+          customTiers.forEach((t) => board.appendChild(appendCanvasRow(t)));
+        }
       } else {
         TIERS().forEach((t) => {
           const row = document.createElement("div");
@@ -633,7 +775,7 @@
 
     function listUrl(id, opts = {}) {
       const q = new URLSearchParams();
-      q.set("type", listType === "iceberg" ? "iceberg" : "classic");
+      q.set("type", typeParam());
       if (id) q.set("list", id);
       if (opts.view ?? readOnly) q.set("view", "1");
       const query = q.toString();
@@ -738,7 +880,7 @@
         }
       });
       const narrow = window.matchMedia("(max-width: 700px)").matches;
-      const place = listType === "iceberg" ? "layer" : "tier";
+      const place = listType === "iceberg" ? "layer" : listType === "canvas" ? "row" : "tier";
       if (readOnly) {
         hint.textContent = "This list is view only. Ranking stays locked.";
         return;
@@ -746,6 +888,8 @@
       if (!items.size) {
         hint.textContent = listType === "iceberg"
           ? (narrow ? "Add images or a folder, tap one, then tap a layer. Surface is well-known; the void is the most obscure." : "Add images or a folder, then drag them into a layer. The surface is well-known; the void is the most obscure.")
+          : listType === "canvas"
+            ? (customTiers.length ? (narrow ? "Add images or a folder, tap one, then tap a row." : "Add images or a folder, then drag them into a row.") : "Add a row, then add images.")
           : (narrow ? "Add images or a folder, tap one, then tap a tier to lock it in." : "Add images or a folder, then drag them into a tier to lock them in.");
       } else if (selected) {
         hint.textContent = `Tap a ${place} to lock the selected image in, or tap it again to cancel.`;
@@ -767,10 +911,11 @@
       return {
         id: listId,
         type: listType,
-        title: titleInput.value.trim() || (listType === "iceberg" ? "Untitled iceberg" : "Untitled list"),
+        title: titleInput.value.trim() || defaultTitle(),
         updatedAt: new Date().toISOString(),
         order: Object.fromEntries(zoneIds().map((k) => [k, [...(order[k] || [])]])),
         items: Object.fromEntries(items),
+        tiers: listType === "canvas" ? customTiers.map((t) => ({ ...t })) : undefined,
       };
     }
 
@@ -778,11 +923,12 @@
       hydrating = true;
       listType = normalizeType(data.type);
       listId = data.id || uid();
-      titleInput.value = data.title || (listType === "iceberg" ? "Untitled iceberg" : "Untitled list");
+      customTiers = listType === "canvas" ? sanitizeTiers(data.tiers) : [];
+      titleInput.value = data.title || defaultTitle();
       items.clear();
       Object.entries(data.items || {}).forEach(([id, src]) => items.set(id, src));
       order.tray = [];
-      [...CLASSIC_TIERS, ...ICEBERG_TIERS].forEach((t) => { order[t.id] = []; });
+      [...CLASSIC_TIERS, ...ICEBERG_TIERS, ...customTiers].forEach((t) => { order[t.id] = []; });
       const incoming = data.order || {};
       zoneIds().forEach((zone) => {
         order[zone] = (incoming[zone] || []).filter((id) => items.has(id));
@@ -793,10 +939,35 @@
       history.replaceState({}, "", listUrl(listId));
     }
 
-    function emptyBoard() {
+    function addCanvasRow() {
+      if (readOnly || listType !== "canvas" || customTiers.length >= 20) return;
+      const id = `row-${uid().replace(/-/g, "").slice(0, 10)}`;
+      customTiers.push({
+        id,
+        label: `Row ${customTiers.length + 1}`,
+        color: CANVAS_COLORS[customTiers.length % CANVAS_COLORS.length],
+      });
+      order[id] = [];
+      rebuildBoard();
+      render();
+      queueSave();
+    }
+
+    function removeCanvasRow(id) {
+      if (readOnly || listType !== "canvas") return;
+      order.tray.push(...(order[id] || []));
+      delete order[id];
+      customTiers = customTiers.filter((tier) => tier.id !== id);
+      rebuildBoard();
+      render();
+      queueSave();
+    }
+
+    function emptyBoard(resetRows = false) {
       items.clear();
       order.tray = [];
-      [...CLASSIC_TIERS, ...ICEBERG_TIERS].forEach((t) => { order[t.id] = []; });
+      if (listType === "canvas" && resetRows) customTiers = [];
+      [...CLASSIC_TIERS, ...ICEBERG_TIERS, ...customTiers].forEach((t) => { order[t.id] = []; });
     }
 
     function setStatus(text) {
@@ -1007,11 +1178,14 @@
 
     titleInput.addEventListener("input", queueSave);
 
+    document.getElementById("add-row").addEventListener("click", addCanvasRow);
+
     document.getElementById("new-list").addEventListener("click", () => {
       if (readOnly) return;
       listId = uid();
-      titleInput.value = listType === "iceberg" ? "Untitled iceberg" : "Untitled list";
-      emptyBoard();
+      titleInput.value = defaultTitle();
+      emptyBoard(true);
+      if (listType === "canvas") rebuildBoard();
       render();
       history.replaceState({}, "", listUrl());
       queueSave();
