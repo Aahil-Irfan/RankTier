@@ -1,15 +1,32 @@
-:root {
+:root, [data-theme="dark"] {
   --bg: #070708;
   --card: #141416;
   --line: #26262b;
   --text: #f4f4f5;
   --muted: #a1a1aa;
+  --nav: rgba(7,7,8,0.92);
+  --ghost: #222226;
+  --code: #111114;
+  --preview-row: #29292b;
+  --preview-edge: #111;
   --s: #ff4f4f;
   --a: #ff8c2e;
   --b: #ffcc33;
   --c: #8cd652;
   --d: #61baf2;
   --f: #ba9eed;
+}
+[data-theme="light"] {
+  --bg: #f4f4f5;
+  --card: #ffffff;
+  --line: #e4e4e7;
+  --text: #111113;
+  --muted: #52525b;
+  --nav: rgba(244,244,245,0.92);
+  --ghost: #e4e4e7;
+  --code: #ececee;
+  --preview-row: #e4e4e7;
+  --preview-edge: #d4d4d8;
 }
 * { box-sizing: border-box; }
 html, body {
@@ -49,7 +66,7 @@ nav {
   border-bottom: 1px solid var(--line);
   position: sticky;
   top: 0;
-  background: rgba(7,7,8,0.92);
+  background: var(--nav);
   backdrop-filter: blur(12px);
   z-index: 10;
 }
@@ -59,9 +76,19 @@ nav {
   font-weight: 800;
   letter-spacing: 0.04em;
 }
-.links { display: flex; gap: 18px; flex-wrap: wrap; }
+.links { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
 .links a { color: var(--muted); text-decoration: none; }
 .links a:hover, .links a.active { color: var(--text); }
+.theme-toggle {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+.theme-toggle:hover { color: var(--text); }
 .hero, .section { padding: 64px 8%; }
 .hero {
   display: grid;
@@ -82,14 +109,14 @@ h1 { font-size: clamp(36px, 6vw, 68px); line-height: 0.95; margin: 0 0 16px; }
   font-weight: 700;
 }
 .btn-primary { background: var(--a); color: #111; }
-.btn-ghost { background: #222226; color: var(--text); }
+.btn-ghost { background: var(--ghost); color: var(--text); }
 .preview {
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid #111;
+  border: 1px solid var(--preview-edge);
   box-shadow: 0 24px 80px rgba(0,0,0,0.45);
 }
-.prow { display: flex; min-height: 52px; background: #29292b; }
+.prow { display: flex; min-height: 52px; background: var(--preview-row); }
 .plabel {
   width: 52px;
   display: grid;
@@ -139,7 +166,7 @@ th, td {
   border-bottom: 1px solid var(--line);
 }
 code, pre {
-  background: #111114;
+  background: var(--code);
   border-radius: 8px;
 }
 code { padding: 2px 6px; }

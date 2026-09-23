@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070708" />
   <title>For Apple — RankTier</title>
+  <script>document.documentElement.setAttribute("data-theme", localStorage.getItem("ranktier:theme") === "light" ? "light" : "dark");</script>
   <link rel="stylesheet" href="../styles.css" />
 </head>
 <body>
@@ -13,6 +15,7 @@
       <a href="../index.html">Home</a>
       <a href="../downloads/index.html">Downloads</a>
       <a class="active" href="index.html">Docs</a>
+      <button type="button" class="theme-toggle" data-theme-toggle>Light</button>
     </div>
   </nav>
   <section class="section">
@@ -28,5 +31,6 @@
     <p><a href="index.html">Back to docs</a></p>
   </section>
   <footer>RankTier · Made by SDL (Aahil Irfan)</footer>
+  <script src="../theme.js"></script>
 </body>
 </html>
