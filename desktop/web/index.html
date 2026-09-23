@@ -428,6 +428,16 @@
       .chooser-grid { grid-template-columns: 1fr; }
       main { padding: 12px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
     }
+    html.readonly .editor-only { display: none !important; }
+    html.readonly .tile { cursor: default; }
+    html.readonly .tile:active { cursor: default; }
+    #view-badge {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
@@ -436,24 +446,26 @@
       <h1>RankTier</h1>
       <a href="../index.html" id="home-link" hidden>Home</a>
       <a href="index.html" id="boards-link">Boards</a>
-      <a href="index.html?type=iceberg" id="mode-link">Iceberg</a>
+      <a href="index.html?type=iceberg" id="mode-link" class="editor-only">Iceberg</a>
     </div>
     <div class="actions">
-      <label class="btn primary" for="file">Add Images</label>
+      <label class="btn primary editor-only" for="file">Add Images</label>
       <input id="file" type="file" accept="image/*" multiple />
-      <label class="btn" for="folder">Add Folder</label>
+      <label class="btn editor-only" for="folder">Add Folder</label>
       <input id="folder" type="file" accept="image/*" multiple webkitdirectory directory />
-      <button type="button" id="reset">Reset ranks</button>
-      <button type="button" class="danger" id="clear">Clear all</button>
+      <button type="button" class="editor-only" id="reset">Reset ranks</button>
+      <button type="button" class="danger editor-only" id="clear">Clear all</button>
       <button type="button" id="theme-toggle" data-theme-toggle>Light</button>
     </div>
   </header>
   <div class="savebar">
     <input id="list-title" type="text" maxlength="80" placeholder="List title" value="Untitled list" />
-    <select id="saved-lists" aria-label="Saved lists">
+    <select id="saved-lists" class="editor-only" aria-label="Saved lists">
       <option value="">Saved lists</option>
     </select>
-    <button type="button" id="new-list">New list</button>
+    <button type="button" class="editor-only" id="new-list">New list</button>
+    <button type="button" class="editor-only" id="copy-view">Copy view link</button>
+    <span id="view-badge" hidden>View only</span>
     <span class="save-status" id="save-status">Lists save automatically</span>
   </div>
   <main>
@@ -522,6 +534,7 @@
     });
 
     const params = new URLSearchParams(location.search);
+    const readOnly = params.get("view") === "1" || params.get("view") === "true";
     function normalizeType(type) {
       if (type === "iceberg" || type === "iceberg-drawn") return "iceberg";
       return "classic";
@@ -544,6 +557,7 @@
     const titleInput = document.getElementById("list-title");
     const savedSelect = document.getElementById("saved-lists");
     const saveStatus = document.getElementById("save-status");
+    const viewBadge = document.getElementById("view-badge");
 
     if (location.protocol === "file:" || !document.referrer && location.pathname.endsWith("/index.html") === false) {
       const link = document.getElementById("home-link");
@@ -554,10 +568,19 @@
       }
     }
 
+    function applyViewMode() {
+      document.documentElement.classList.toggle("readonly", readOnly);
+      titleInput.readOnly = readOnly;
+      titleInput.setAttribute("aria-readonly", readOnly ? "true" : "false");
+      if (viewBadge) viewBadge.hidden = !readOnly;
+      if (readOnly) setStatus("View only — ranking is locked");
+    }
+
     function applyMode() {
       document.body.classList.toggle("mode-iceberg", listType === "iceberg");
       board.classList.toggle("iceberg", listType === "iceberg");
-      document.title = listType === "iceberg" ? "RankTier Iceberg" : "RankTier";
+      document.title = (listType === "iceberg" ? "RankTier Iceberg" : "RankTier") + (readOnly ? " (view)" : "");
+      applyViewMode();
       const modeLink = document.getElementById("mode-link");
       if (modeLink) {
         if (listType === "iceberg") {
@@ -608,10 +631,11 @@
       return crypto.randomUUID();
     }
 
-    function listUrl(id) {
+    function listUrl(id, opts = {}) {
       const q = new URLSearchParams();
       q.set("type", listType === "iceberg" ? "iceberg" : "classic");
       if (id) q.set("list", id);
+      if (opts.view ?? readOnly) q.set("view", "1");
       const query = q.toString();
       return location.pathname + (query ? `?${query}` : "");
     }
@@ -628,6 +652,7 @@
     }
 
     function move(id, dest, index) {
+      if (readOnly) return;
       const from = findZone(id);
       if (!from) return;
       order[from] = order[from].filter((x) => x !== id);
@@ -641,28 +666,31 @@
     function tileFor(id) {
       const img = document.createElement("img");
       img.className = "tile";
-      img.draggable = true;
+      img.draggable = !readOnly;
       img.src = items.get(id);
       img.alt = "Ranked item";
       img.dataset.id = id;
-      img.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("text/plain", id);
-        e.dataTransfer.effectAllowed = "move";
-      });
-      img.addEventListener("dblclick", () => {
-        selected = null;
-        move(id, "tray");
-      });
-      img.addEventListener("click", (e) => {
-        e.stopPropagation();
-        selected = selected === id ? null : id;
-        render();
-      });
+      if (!readOnly) {
+        img.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", id);
+          e.dataTransfer.effectAllowed = "move";
+        });
+        img.addEventListener("dblclick", () => {
+          selected = null;
+          move(id, "tray");
+        });
+        img.addEventListener("click", (e) => {
+          e.stopPropagation();
+          selected = selected === id ? null : id;
+          render();
+        });
+      }
       if (selected === id) img.classList.add("selected");
       return img;
     }
 
     function bindZone(el) {
+      if (readOnly) return;
       el.addEventListener("dragover", (e) => {
         e.preventDefault();
         el.classList.add("over");
@@ -705,12 +733,16 @@
         if (zone === "tray" && order.tray.length === 0) {
           const empty = document.createElement("div");
           empty.className = "empty";
-          empty.textContent = "No images yet — add files or a folder";
+          empty.textContent = readOnly ? "Tray is empty" : "No images yet — add files or a folder";
           zoneEl.appendChild(empty);
         }
       });
       const narrow = window.matchMedia("(max-width: 700px)").matches;
       const place = listType === "iceberg" ? "layer" : "tier";
+      if (readOnly) {
+        hint.textContent = "This list is view only. Ranking stays locked.";
+        return;
+      }
       if (!items.size) {
         hint.textContent = listType === "iceberg"
           ? (narrow ? "Add images or a folder, tap one, then tap a layer. Surface is well-known; the void is the most obscure." : "Add images or a folder, then drag them into a layer. The surface is well-known; the void is the most obscure.")
@@ -797,7 +829,7 @@
     }
 
     async function persist() {
-      if (hydrating) return;
+      if (hydrating || readOnly) return;
       const data = snapshot();
       localStorage.setItem("ranktier:current", JSON.stringify(data));
       localStorage.setItem("ranktier:last-id", data.id);
@@ -816,7 +848,7 @@
     }
 
     function queueSave() {
-      if (hydrating) return;
+      if (hydrating || readOnly) return;
       setStatus("Saving…");
       clearTimeout(saveTimer);
       saveTimer = setTimeout(persist, 400);
@@ -857,6 +889,7 @@
     }
 
     async function addFiles(fileList) {
+      if (readOnly) return;
       const files = [...fileList].filter(isImageFile);
       if (!files.length) {
         setStatus("No images found");
@@ -934,18 +967,29 @@
 
     const tray = document.getElementById("tray");
     tray.addEventListener("dragover", (e) => {
-      if (![...e.dataTransfer.types].includes("Files")) return;
+      if (readOnly || ![...e.dataTransfer.types].includes("Files")) return;
       e.preventDefault();
       tray.classList.add("over");
     });
     tray.addEventListener("drop", async (e) => {
-      if (![...e.dataTransfer.types].includes("Files")) return;
+      if (readOnly || ![...e.dataTransfer.types].includes("Files")) return;
       e.preventDefault();
       tray.classList.remove("over");
       await addFiles(await filesFromDataTransfer(e.dataTransfer));
     });
 
+    document.getElementById("copy-view").addEventListener("click", async () => {
+      const url = new URL(listUrl(listId, { view: true }), location.href).href;
+      try {
+        await navigator.clipboard.writeText(url);
+        setStatus("View link copied");
+      } catch {
+        setStatus(url);
+      }
+    });
+
     document.getElementById("reset").addEventListener("click", () => {
+      if (readOnly) return;
       TIERS().forEach((t) => {
         order.tray.push(...(order[t.id] || []));
         order[t.id] = [];
@@ -955,6 +999,7 @@
     });
 
     document.getElementById("clear").addEventListener("click", () => {
+      if (readOnly) return;
       emptyBoard();
       render();
       queueSave();
@@ -963,6 +1008,7 @@
     titleInput.addEventListener("input", queueSave);
 
     document.getElementById("new-list").addEventListener("click", () => {
+      if (readOnly) return;
       listId = uid();
       titleInput.value = listType === "iceberg" ? "Untitled iceberg" : "Untitled list";
       emptyBoard();
@@ -995,7 +1041,7 @@
     }
 
     async function boot() {
-      const wanted = params.get("list") || localStorage.getItem("ranktier:last-id");
+      const wanted = params.get("list") || (readOnly ? null : localStorage.getItem("ranktier:last-id"));
       if (wanted) {
         try {
           const res = await fetch(`/api/lists/${wanted}`);
