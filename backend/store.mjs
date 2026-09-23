@@ -11,6 +11,7 @@ async function ensureDir() {
 function normalizeType(type) {
   if (type === "iceberg" || type === "iceberg-drawn") return "iceberg";
   if (type === "canvas" || type === "blank") return "canvas";
+  if (type === "custom" || type === "make") return "custom";
   return "classic";
 }
 
@@ -71,7 +72,7 @@ export async function saveList(data) {
     updatedAt: new Date().toISOString(),
     order: data.order || {},
     items: data.items || {},
-    tiers: normalizeType(data.type) === "canvas" ? sanitizeTiers(data.tiers) : undefined,
+    tiers: ["canvas", "custom"].includes(normalizeType(data.type)) ? sanitizeTiers(data.tiers) : undefined,
   };
   await writeFile(listPath(record.id), JSON.stringify(record));
   return record;

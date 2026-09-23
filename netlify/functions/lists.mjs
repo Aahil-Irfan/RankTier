@@ -10,6 +10,7 @@ const headers = {
 function normalizeType(type) {
   if (type === "iceberg" || type === "iceberg-drawn") return "iceberg";
   if (type === "canvas" || type === "blank") return "canvas";
+  if (type === "custom" || type === "make") return "custom";
   return "classic";
 }
 
@@ -78,7 +79,7 @@ export async function handler(event) {
         updatedAt: new Date().toISOString(),
         order: incoming.order || {},
         items: incoming.items || {},
-        tiers: normalizeType(incoming.type) === "canvas" ? sanitizeTiers(incoming.tiers) : undefined,
+        tiers: ["canvas", "custom"].includes(normalizeType(incoming.type)) ? sanitizeTiers(incoming.tiers) : undefined,
       };
       await store.setJSON(record.id, record);
       return json(200, record);

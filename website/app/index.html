@@ -8,11 +8,17 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect fill='%23ff4f4f' width='64' height='64' rx='10'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='36' font-family='system-ui' font-weight='800'%3ES%3C/text%3E%3C/svg%3E" />
   <script>
     document.documentElement.setAttribute("data-theme", localStorage.getItem("ranktier:theme") === "light" ? "light" : "dark");
-    document.documentElement.classList.toggle(
-      "choose",
-      !new URLSearchParams(location.search).get("type") &&
-      !new URLSearchParams(location.search).get("list")
-    );
+    (function () {
+      const q = new URLSearchParams(location.search);
+      const type = q.get("type");
+      const list = q.get("list");
+      const view = q.get("view");
+      document.documentElement.classList.toggle("choose", !type && !list);
+      document.documentElement.classList.toggle(
+        "build",
+        (type === "custom" || type === "make") && !list && view !== "1" && view !== "true"
+      );
+    })();
   </script>
   <style>
     :root, [data-theme="dark"] {
@@ -322,7 +328,9 @@
       border-radius: 2px;
     }
     .mode-iceberg .hint { text-align: center; }
-    html.choose header, html.choose .savebar, html.choose main { display: none !important; }
+    html.choose header, html.choose .savebar, html.choose main,
+    html.build header, html.build .savebar, html.build main { display: none !important; }
+    html:not(.build) .builder { display: none; }
     .credit {
       text-align: center;
       color: var(--faint);
@@ -330,7 +338,7 @@
       padding: 16px;
       padding-bottom: max(16px, env(safe-area-inset-bottom));
     }
-    html.choose .credit {
+    html.choose .credit, html.build .credit {
       position: fixed;
       left: 0;
       right: 0;
@@ -375,7 +383,7 @@
     }
     .chooser-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 16px;
     }
     .chooser-card {
@@ -414,9 +422,11 @@
     .mini-ice i:nth-child(3) { background: #3a7ea0; }
     .mini-ice i:nth-child(4) { background: #1a3e59; }
     .mini-ice i:nth-child(5) { background: #08131e; }
-    .mini-canvas {
+    .mini-canvas, .mini-make {
       height: 44px;
       border-radius: 6px;
+    }
+    .mini-canvas {
       border: 1px dashed var(--card-border);
       background: repeating-linear-gradient(
         90deg,
@@ -426,6 +436,49 @@
         var(--card-border) 19px
       );
     }
+    .mini-make { display: flex; flex-direction: column; overflow: hidden; }
+    .mini-make i { flex: 1; }
+    .mini-make i:nth-child(1) { background: #ff4f4f; }
+    .mini-make i:nth-child(2) { background: #ffcc33; }
+    .mini-make i:nth-child(3) { background: #61baf2; }
+    .builder {
+      position: relative;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 28px 16px 72px;
+      padding-top: max(28px, env(safe-area-inset-top));
+    }
+    .builder-inner { width: min(560px, 100%); }
+    .builder-inner h2 { margin: 0 0 8px; font-size: clamp(28px, 6vw, 36px); }
+    .builder-lead { color: var(--muted); margin: 0 0 20px; }
+    .builder-row {
+      display: grid;
+      grid-template-columns: 36px 1fr auto auto auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .builder-row input[type="text"] {
+      appearance: none;
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      background: var(--input);
+      color: var(--text);
+      font: inherit;
+      min-height: 44px;
+      padding: 8px 10px;
+    }
+    .builder-row input[type="color"] {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .builder-row button { min-height: 36px; padding: 0 10px; }
+    .builder-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
     .mode-canvas .label {
       font-size: 15px;
       padding: 4px;
@@ -510,6 +563,7 @@
       <button type="button" class="editor-only" id="reset">Reset ranks</button>
       <button type="button" class="danger editor-only" id="clear">Clear all</button>
       <button type="button" class="editor-only" id="add-row" hidden>Add row</button>
+      <button type="button" class="editor-only" id="edit-board" hidden>Edit board</button>
       <button type="button" id="theme-toggle" data-theme-toggle>Light</button>
     </div>
   </header>
@@ -552,6 +606,26 @@
           <strong>Blank canvas</strong>
           <span>Start empty and add your own rows.</span>
         </a>
+        <a class="chooser-card" href="index.html?type=custom">
+          <div class="mini-make" aria-hidden="true"><i></i><i></i><i></i></div>
+          <strong>Make your own</strong>
+          <span>Name and color the rows first, then rank.</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="builder" id="builder">
+    <a class="chooser-home" href="index.html">Boards</a>
+    <button type="button" class="chooser-home chooser-theme" data-theme-toggle>Light</button>
+    <div class="builder-inner">
+      <p class="chooser-kicker">Make your own</p>
+      <h2>Design the rows</h2>
+      <p class="builder-lead">Set names and colors first. You can still edit them after you start ranking.</p>
+      <div id="builder-rows"></div>
+      <div class="builder-actions">
+        <button type="button" id="builder-add">Add row</button>
+        <button type="button" id="builder-sf">Use S–F</button>
+        <button type="button" class="primary" id="builder-start">Start ranking</button>
       </div>
     </div>
   </div>
@@ -599,7 +673,11 @@
     function normalizeType(type) {
       if (type === "iceberg" || type === "iceberg-drawn") return "iceberg";
       if (type === "canvas" || type === "blank") return "canvas";
+      if (type === "custom" || type === "make") return "custom";
       return "classic";
+    }
+    function usesCustomRows(type = listType) {
+      return type === "canvas" || type === "custom";
     }
     function sanitizeTiers(raw) {
       if (!Array.isArray(raw)) return [];
@@ -612,16 +690,19 @@
     function defaultTitle() {
       if (listType === "iceberg") return "Untitled iceberg";
       if (listType === "canvas") return "Untitled canvas";
+      if (listType === "custom") return "Untitled board";
       return "Untitled list";
     }
     function typeParam() {
       if (listType === "iceberg") return "iceberg";
       if (listType === "canvas") return "canvas";
+      if (listType === "custom") return "custom";
       return "classic";
     }
     let listType = normalizeType(params.get("type"));
     let customTiers = [];
-    const TIERS = () => (listType === "iceberg" ? ICEBERG_TIERS : listType === "canvas" ? customTiers : CLASSIC_TIERS);
+    let builderDraft = [];
+    const TIERS = () => (listType === "iceberg" ? ICEBERG_TIERS : usesCustomRows() ? customTiers : CLASSIC_TIERS);
 
     const items = new Map();
     const order = { tray: [] };
@@ -644,8 +725,9 @@
       const link = document.getElementById("home-link");
       if (link && (location.protocol === "file:" || !location.pathname.includes("/app"))) {
         link.hidden = location.protocol !== "http:" && location.protocol !== "https:";
-        const chooserHome = document.querySelector(".chooser-home");
-        if (chooserHome) chooserHome.hidden = link.hidden;
+        document.querySelectorAll('a.chooser-home[href="../index.html"]').forEach((home) => {
+          home.hidden = link.hidden;
+        });
       }
     }
 
@@ -659,12 +741,14 @@
 
     function applyMode() {
       document.body.classList.toggle("mode-iceberg", listType === "iceberg");
-      document.body.classList.toggle("mode-canvas", listType === "canvas");
+      document.body.classList.toggle("mode-canvas", usesCustomRows());
       board.classList.toggle("iceberg", listType === "iceberg");
-      document.title = (listType === "iceberg" ? "RankTier Iceberg" : listType === "canvas" ? "RankTier Canvas" : "RankTier") + (readOnly ? " (view)" : "");
+      document.title = (listType === "iceberg" ? "RankTier Iceberg" : listType === "custom" ? "RankTier Board" : listType === "canvas" ? "RankTier Canvas" : "RankTier") + (readOnly ? " (view)" : "");
       applyViewMode();
       const addRow = document.getElementById("add-row");
-      if (addRow) addRow.hidden = listType !== "canvas" || readOnly;
+      if (addRow) addRow.hidden = !usesCustomRows() || readOnly;
+      const editBoard = document.getElementById("edit-board");
+      if (editBoard) editBoard.hidden = listType !== "custom" || readOnly;
       const modeLink = document.getElementById("mode-link");
       if (modeLink) {
         if (listType === "iceberg") {
@@ -675,7 +759,7 @@
           modeLink.textContent = "Iceberg";
         }
       }
-      if (titleInput.value === "Untitled list" || titleInput.value === "Untitled iceberg" || titleInput.value === "Untitled canvas") {
+      if (titleInput.value === "Untitled list" || titleInput.value === "Untitled iceberg" || titleInput.value === "Untitled canvas" || titleInput.value === "Untitled board") {
         titleInput.value = defaultTitle();
       }
     }
@@ -749,7 +833,7 @@
         frame.innerHTML = `<img src="iceberg-template.png" alt="Iceberg template">`;
         appendIcebergRows(frame);
         board.appendChild(frame);
-      } else if (listType === "canvas") {
+      } else if (usesCustomRows()) {
         if (!customTiers.length) {
           const empty = document.createElement("div");
           empty.className = "canvas-empty";
@@ -880,7 +964,7 @@
         }
       });
       const narrow = window.matchMedia("(max-width: 700px)").matches;
-      const place = listType === "iceberg" ? "layer" : listType === "canvas" ? "row" : "tier";
+      const place = listType === "iceberg" ? "layer" : usesCustomRows() ? "row" : "tier";
       if (readOnly) {
         hint.textContent = "This list is view only. Ranking stays locked.";
         return;
@@ -888,7 +972,7 @@
       if (!items.size) {
         hint.textContent = listType === "iceberg"
           ? (narrow ? "Add images or a folder, tap one, then tap a layer. Surface is well-known; the void is the most obscure." : "Add images or a folder, then drag them into a layer. The surface is well-known; the void is the most obscure.")
-          : listType === "canvas"
+          : usesCustomRows()
             ? (customTiers.length ? (narrow ? "Add images or a folder, tap one, then tap a row." : "Add images or a folder, then drag them into a row.") : "Add a row, then add images.")
           : (narrow ? "Add images or a folder, tap one, then tap a tier to lock it in." : "Add images or a folder, then drag them into a tier to lock them in.");
       } else if (selected) {
@@ -900,11 +984,119 @@
       }
     }
 
+    let trayBound = false;
+    function ensureTrayBound() {
+      if (trayBound || readOnly) return;
+      bindZone(document.getElementById("tray"));
+      trayBound = true;
+    }
+
+    function newRowId() {
+      return `row-${uid().replace(/-/g, "").slice(0, 10)}`;
+    }
+
+    function defaultBuilderRows() {
+      return [0, 1, 2].map((i) => ({
+        id: newRowId(),
+        label: `Row ${i + 1}`,
+        color: CANVAS_COLORS[i],
+      }));
+    }
+
+    function renderBuilder() {
+      const root = document.getElementById("builder-rows");
+      if (!root) return;
+      root.replaceChildren();
+      builderDraft.forEach((tier, i) => {
+        const row = document.createElement("div");
+        row.className = "builder-row";
+        const color = document.createElement("input");
+        color.type = "color";
+        color.value = tier.color;
+        color.setAttribute("aria-label", "Row color");
+        color.addEventListener("input", () => { tier.color = color.value; });
+        const name = document.createElement("input");
+        name.type = "text";
+        name.maxLength = 24;
+        name.value = tier.label;
+        name.placeholder = `Row ${i + 1}`;
+        name.setAttribute("aria-label", "Row name");
+        name.addEventListener("input", () => { tier.label = name.value.slice(0, 24); });
+        const up = document.createElement("button");
+        up.type = "button";
+        up.textContent = "↑";
+        up.setAttribute("aria-label", "Move row up");
+        up.disabled = i === 0;
+        up.addEventListener("click", () => {
+          if (i === 0) return;
+          builderDraft.splice(i - 1, 0, builderDraft.splice(i, 1)[0]);
+          renderBuilder();
+        });
+        const down = document.createElement("button");
+        down.type = "button";
+        down.textContent = "↓";
+        down.setAttribute("aria-label", "Move row down");
+        down.disabled = i === builderDraft.length - 1;
+        down.addEventListener("click", () => {
+          if (i >= builderDraft.length - 1) return;
+          builderDraft.splice(i + 1, 0, builderDraft.splice(i, 1)[0]);
+          renderBuilder();
+        });
+        const del = document.createElement("button");
+        del.type = "button";
+        del.textContent = "Remove";
+        del.disabled = builderDraft.length <= 1;
+        del.addEventListener("click", () => {
+          if (builderDraft.length <= 1) return;
+          builderDraft.splice(i, 1);
+          renderBuilder();
+        });
+        row.append(color, name, up, down, del);
+        root.appendChild(row);
+      });
+    }
+
+    function openBuilder() {
+      document.documentElement.classList.add("build");
+      builderDraft = (customTiers.length ? customTiers : defaultBuilderRows()).map((tier) => ({ ...tier }));
+      renderBuilder();
+    }
+
+    function startCustomBoard() {
+      const rows = sanitizeTiers(builderDraft.map((tier) => ({
+        ...tier,
+        label: String(tier.label || "").trim() || "Row",
+      })));
+      if (!rows.length) return;
+      const keep = new Set(rows.map((tier) => tier.id));
+      Object.keys(order).forEach((zone) => {
+        if (zone !== "tray" && !keep.has(zone)) {
+          order.tray.push(...(order[zone] || []));
+          delete order[zone];
+        }
+      });
+      customTiers = rows;
+      customTiers.forEach((tier) => {
+        if (!order[tier.id]) order[tier.id] = [];
+      });
+      document.documentElement.classList.remove("build");
+      if (!titleInput.value.trim()) titleInput.value = defaultTitle();
+      rebuildBoard();
+      ensureTrayBound();
+      render();
+      history.replaceState({}, "", listUrl(listId));
+      queueSave();
+    }
+
     if (document.documentElement.classList.contains("choose")) {
       document.title = "RankTier";
+    } else if (document.documentElement.classList.contains("build")) {
+      document.title = "RankTier Board";
+      builderDraft = defaultBuilderRows();
+      renderBuilder();
     } else {
       rebuildBoard();
-      bindZone(document.getElementById("tray"));
+      ensureTrayBound();
     }
 
     function snapshot() {
@@ -915,7 +1107,7 @@
         updatedAt: new Date().toISOString(),
         order: Object.fromEntries(zoneIds().map((k) => [k, [...(order[k] || [])]])),
         items: Object.fromEntries(items),
-        tiers: listType === "canvas" ? customTiers.map((t) => ({ ...t })) : undefined,
+        tiers: usesCustomRows() ? customTiers.map((t) => ({ ...t })) : undefined,
       };
     }
 
@@ -923,7 +1115,9 @@
       hydrating = true;
       listType = normalizeType(data.type);
       listId = data.id || uid();
-      customTiers = listType === "canvas" ? sanitizeTiers(data.tiers) : [];
+      customTiers = usesCustomRows() ? sanitizeTiers(data.tiers) : [];
+      document.documentElement.classList.remove("build");
+      ensureTrayBound();
       titleInput.value = data.title || defaultTitle();
       items.clear();
       Object.entries(data.items || {}).forEach(([id, src]) => items.set(id, src));
@@ -940,7 +1134,7 @@
     }
 
     function addCanvasRow() {
-      if (readOnly || listType !== "canvas" || customTiers.length >= 20) return;
+      if (readOnly || !usesCustomRows() || customTiers.length >= 20) return;
       const id = `row-${uid().replace(/-/g, "").slice(0, 10)}`;
       customTiers.push({
         id,
@@ -954,7 +1148,7 @@
     }
 
     function removeCanvasRow(id) {
-      if (readOnly || listType !== "canvas") return;
+      if (readOnly || !usesCustomRows()) return;
       order.tray.push(...(order[id] || []));
       delete order[id];
       customTiers = customTiers.filter((tier) => tier.id !== id);
@@ -966,7 +1160,7 @@
     function emptyBoard(resetRows = false) {
       items.clear();
       order.tray = [];
-      if (listType === "canvas" && resetRows) customTiers = [];
+      if (usesCustomRows() && resetRows) customTiers = [];
       [...CLASSIC_TIERS, ...ICEBERG_TIERS, ...customTiers].forEach((t) => { order[t.id] = []; });
     }
 
@@ -1179,12 +1373,39 @@
     titleInput.addEventListener("input", queueSave);
 
     document.getElementById("add-row").addEventListener("click", addCanvasRow);
+    document.getElementById("edit-board").addEventListener("click", () => {
+      if (readOnly || listType !== "custom") return;
+      openBuilder();
+    });
+    document.getElementById("builder-add").addEventListener("click", () => {
+      if (builderDraft.length >= 20) return;
+      builderDraft.push({
+        id: newRowId(),
+        label: `Row ${builderDraft.length + 1}`,
+        color: CANVAS_COLORS[builderDraft.length % CANVAS_COLORS.length],
+      });
+      renderBuilder();
+    });
+    document.getElementById("builder-sf").addEventListener("click", () => {
+      builderDraft = CLASSIC_TIERS.map((tier, i) => ({
+        id: `row-${tier.id}`,
+        label: tier.label,
+        color: CANVAS_COLORS[i % CANVAS_COLORS.length],
+      }));
+      renderBuilder();
+    });
+    document.getElementById("builder-start").addEventListener("click", startCustomBoard);
 
     document.getElementById("new-list").addEventListener("click", () => {
       if (readOnly) return;
       listId = uid();
       titleInput.value = defaultTitle();
       emptyBoard(true);
+      if (listType === "custom") {
+        history.replaceState({}, "", listUrl());
+        openBuilder();
+        return;
+      }
       if (listType === "canvas") rebuildBoard();
       render();
       history.replaceState({}, "", listUrl());
@@ -1215,7 +1436,7 @@
     }
 
     async function boot() {
-      const wanted = params.get("list") || (readOnly ? null : localStorage.getItem("ranktier:last-id"));
+      const wanted = params.get("list") || (readOnly || listType === "custom" ? null : localStorage.getItem("ranktier:last-id"));
       if (wanted) {
         try {
           const res = await fetch(`/api/lists/${wanted}`);
@@ -1238,7 +1459,7 @@
       await refreshSavedOptions();
     }
 
-    if (!document.documentElement.classList.contains("choose")) {
+    if (!document.documentElement.classList.contains("choose") && !document.documentElement.classList.contains("build")) {
       render();
       boot();
     }
