@@ -144,6 +144,8 @@ h2 { font-size: 28px; margin: 0 0 8px; }
   border-radius: 14px;
   padding: 20px;
 }
+.card h2 { font-size: 22px; margin: 0 0 8px; }
+.card h2 .small { font-weight: 600; }
 .card h3 { margin: 0 0 8px; }
 .card p { color: var(--muted); margin: 0 0 16px; }
 .card ul { margin: 0 0 16px; padding-left: 18px; color: var(--muted); }

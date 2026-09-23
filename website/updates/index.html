@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070708" />
+  <title>Updates — RankTier</title>
+  <script>document.documentElement.setAttribute("data-theme", localStorage.getItem("ranktier:theme") === "light" ? "light" : "dark");</script>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <nav>
+    <a class="logo" href="../index.html">RANKTIER</a>
+    <div class="links">
+      <a href="../index.html">Home</a>
+      <a href="../app/index.html">Open app</a>
+      <a href="../app/index.html?type=iceberg">Iceberg</a>
+      <a href="../downloads/index.html">Downloads</a>
+      <a class="active" href="index.html">Updates</a>
+      <a href="../docs/index.html">Docs</a>
+      <button type="button" class="theme-toggle" data-theme-toggle>Light</button>
+    </div>
+  </nav>
+
+  <section class="section">
+    <h1>Updates</h1>
+    <p class="lead">The browser app is always the latest live site. Older copies of the website are not kept. Previous versions here are Windows, Linux, and Apple downloads only.</p>
+
+    <article class="card" id="1.0.0">
+      <h2>1.0.0 <span class="small">Latest download release · September 2026</span></h2>
+      <p>First desktop and Apple packages. S–F ranking board that opens in your browser from a local helper, plus the SwiftUI project for iPhone, iPad, and Mac.</p>
+      <div class="table-wrap"><table>
+        <tr><th>File</th><th>Platform</th></tr>
+        <tr>
+          <td><a href="../downloads/TierList-1.0.0-windows-amd64.exe">TierList-1.0.0-windows-amd64.exe</a></td>
+          <td>Windows 64-bit</td>
+        </tr>
+        <tr>
+          <td><a href="../downloads/TierList-1.0.0-windows-arm64.exe">TierList-1.0.0-windows-arm64.exe</a></td>
+          <td>Windows on ARM</td>
+        </tr>
+        <tr>
+          <td><a href="../downloads/TierList-1.0.0-windows-amd64.zip">TierList-1.0.0-windows-amd64.zip</a></td>
+          <td>Windows zip + README</td>
+        </tr>
+        <tr>
+          <td><a href="../downloads/tierlist_1.0.0_amd64.deb">tierlist_1.0.0_amd64.deb</a></td>
+          <td>Debian / Ubuntu (amd64)</td>
+        </tr>
+        <tr>
+          <td><a href="../downloads/tierlist_1.0.0_arm64.deb">tierlist_1.0.0_arm64.deb</a></td>
+          <td>Debian / Ubuntu (arm64)</td>
+        </tr>
+        <tr>
+          <td><a href="../downloads/tierlist-1.0.0-1.x86_64.rpm">tierlist-1.0.0-1.x86_64.rpm</a></td>
+          <td>Fedora / RHEL (x86_64)</td>
+        </tr>
+        <tr>
+          <td><a href="../downloads/tierlist-1.0.0-1.aarch64.rpm">tierlist-1.0.0-1.aarch64.rpm</a></td>
+          <td>Fedora / RHEL (aarch64)</td>
+        </tr>
+        <tr>
+          <td><a href="../downloads/tierlist-1.0.0-linux-amd64.tar.gz">tierlist-1.0.0-linux-amd64.tar.gz</a></td>
+          <td>Linux tarball (amd64)</td>
+        </tr>
+        <tr>
+          <td><a href="../downloads/tierlist-1.0.0-linux-arm64.tar.gz">tierlist-1.0.0-linux-arm64.tar.gz</a></td>
+          <td>Linux tarball (arm64)</td>
+        </tr>
+        <tr>
+          <td><a href="../downloads/TierList-For-Apple-1.0.0.zip">TierList-For-Apple-1.0.0.zip</a></td>
+          <td>iPhone, iPad, and Mac (Xcode)</td>
+        </tr>
+      </table></div>
+      <p class="small">Checksums: <a href="../downloads/SHA256SUMS.txt">SHA256SUMS.txt</a>. Current files also live on the <a href="../downloads/index.html">downloads</a> page.</p>
+    </article>
+  </section>
+
+  <section class="section" id="previous">
+    <h2>Previous download versions</h2>
+    <p class="lead">1.0.0 is the first Windows, Linux, and Apple release. When a new download build ships, older packages stay listed here. Browser builds are not archived.</p>
+  </section>
+
+  <section class="section" id="site">
+    <h2>Live site (not downloadable as old versions)</h2>
+    <p class="lead">These landed on the website after 1.0.0. Use <a href="../app/index.html">Open app</a> — there is no older browser zip for them.</p>
+    <div class="grid">
+      <article class="card">
+        <h3>Iceberg board</h3>
+        <p>Public photo iceberg with surface-to-void layers, plus a board chooser for S–F or iceberg.</p>
+      </article>
+      <article class="card">
+        <h3>Saved lists</h3>
+        <p>Lists save automatically in the browser and through the list API when the server is available.</p>
+      </article>
+      <article class="card">
+        <h3>Dark and light theme</h3>
+        <p>A Light / Dark control on the site and in the app. The choice is remembered on this device.</p>
+      </article>
+    </div>
+  </section>
+
+  <footer>RankTier · Made by SDL (Aahil Irfan) · <a href="../downloads/index.html">Latest downloads</a></footer>
+  <script src="../theme.js"></script>
+</body>
+</html>

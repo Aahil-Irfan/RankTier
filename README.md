@@ -7,6 +7,7 @@ A free **S–F ranking board**. Upload images, drag them into a tier, and they s
 | Platform | What you get |
 | --- | --- |
 | **Website** | Use RankTier in the browser at [ranktier.netlify.app](https://ranktier.netlify.app) |
+| **Updates** | [Changelog and older desktop/Apple downloads](https://ranktier.netlify.app/updates/) |
 | **Windows** | Windows `.exe` from the [downloads page](https://ranktier.netlify.app/downloads/) |
 | **Linux** | `.deb`, `.rpm`, Arch `PKGBUILD`, tarballs, `install.sh` |
 | **For Apple** | One SwiftUI project for iPhone, iPad, and Mac |
